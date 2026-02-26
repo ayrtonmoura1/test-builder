@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS Gerador de Provas (Padrão ENEM)</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script defer src="https://unpkg.com/mathlive"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <aside class="toolbar no-print">
+        <div class="logo-area">
+            <i class="ph ph-exam"></i>
+            <h2>Construtor de avaliações</h2>
+        </div>
+        
+        <div class="tools-section config-section">
+            <label class="config-label">
+                Tamanho da Fonte Global:
+                <select id="fontSizeSelect" onchange="app.changeFontSize()">
+                    <option value="12px">Padrão (12px)</option>
+                    <option value="14px">Confortável (14px)</option>
+                    <option value="16px">Grande (16px)</option>
+                    <option value="18px">Extra (18px)</option>
+    
+                </select>
+            </label>
+        </div>
+
+        <div class="tools-section">
+            <h3>Estrutura</h3>
+            <div class="btn-grid">
+                <button class="btn-primary btn-full" onclick="app.addQuestion()"><i class="ph ph-plus-circle"></i> Inserir Questão</button>
+                <button onclick="app.addTextBlock()"><i class="ph ph-text-t"></i> Texto Livre</button>
+                <button onclick="app.addDivider()"><i class="ph ph-minus"></i> Separador</button>
+                <button class="btn-full" onclick="app.addSpacer()"><i class="ph ph-bounding-box"></i> Inserir Bloco Vazio</button>
+            </div>
+        </div>
+
+        <div class="tools-section">
+            <h3>Layout da Prova</h3>
+            <div class="btn-grid">
+                <button class="btn-secondary btn-full" onclick="app.toggleColumns()" id="btnToggleColumns">
+                    <i class="ph ph-columns"></i> Mudar para 2 Colunas
+                </button>
+            </div>
+        </div>
+
+        <div class="tools-section">
+            <h3>Banco de Dados</h3>
+            <div class="btn-grid">
+    <button class="btn-import" onclick="document.getElementById('importUpload').click()"><i class="ph ph-upload-simple"></i> Importar</button>
+    <input type="file" id="importUpload" accept=".json" class="no-print" style="display: none;" onchange="app.importJSON(event)">
+    <button class="btn-export" onclick="app.exportJSON()"><i class="ph ph-download-simple"></i> Exportar</button>
+</div>
+        </div>
+
+        <div class="tools-section">
+            <h3>Finalizar</h3>
+            <div class="btn-grid">
+    <button class="btn-secondary" onclick="window.print()"><i class="ph ph-printer"></i> Gerar PDF</button>
+    <button class="btn-excel" onclick="app.exportXLSX()"><i class="ph ph-file-xls"></i> Gabarito</button>
+</div>
+        </div>
+
+        <div class="tools-section bottom-tools">
+            <button class="btn-danger btn-full" onclick="app.clearData()"><i class="ph ph-trash"></i> Reiniciar Tudo</button>
+        </div>
+        <h5>Desenvolvido por <strong>Ayrton Moura Souza Lima</strong></h5>
+    </aside>
+
+    <main class="paper-container" onclick="app.handleGlobalClick(event)">
+        <div id="paper" class="paper">
+            
+            <header class="exam-header">
+                <div class="header-main">
+                    <div class="header-logo">
+                        <label for="logoUpload" class="image-upload-wrapper">
+                            <div class="img-placeholder bg-logo" id="logoPlaceholder">
+                                <span class="placeholder-text"><i class="ph ph-buildings"></i><br>Logo</span>
+                            </div>
+                            <img id="logoPreview" src="" alt="Logo" style="display: none;">
+                            <div class="image-overlay no-print"><i class="ph ph-camera"></i></div>
+                        </label>
+                        <input type="file" id="logoUpload" accept="image/*" class="no-print" style="display: none;" onchange="app.handleLogoUpload(event)">
+                    </div>
+                    
+                    <div class="header-info">
+                        <div class="header-row title-row">
+                            <span class="label">Avaliação:</span>
+                            <div class="editable-field" contenteditable="true" data-field="title" id="globalTestTitle" onblur="app.saveState()">Simulado Geral</div>
+                        </div>
+                        <div class="header-row">
+                            <span class="label">Escola:</span>
+                            <div class="editable-field" contenteditable="true" data-field="school" onblur="app.saveState()">Nome da Instituição</div>
+                        </div>
+                        <div class="header-grid">
+                            <div class="header-row">
+                                <span class="label">Turma:</span>
+                                <div class="editable-field" contenteditable="true" data-field="class" onblur="app.saveState()">3º Ano Médio</div>
+                            </div>
+                            <div class="header-row">
+                                <span class="label">Data:</span>
+                                <div class="editable-field" contenteditable="true" data-field="date" onblur="app.saveState()">__ / __ / 20__</div>
+                            </div>
+                        </div>
+                        <div class="header-row signature-row">
+                            <span class="label">Aluno(a):</span>
+                            <div class="signature-line"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="exam-instructions" contenteditable="true" data-field="instructions" onblur="app.saveState()">
+                    <strong>Instruções:</strong> Preencha o cabeçalho. Marque apenas uma alternativa por questão. (Cole imagens e tabelas livremente).
+                </div>
+            </header>
+
+            <div id="blocksContainer" class="blocks-container cols-1"></div>
+        </div>
+    </main>
+
+    <div id="symbolModalOverlay" class="modal-overlay no-print" style="display: none;" onclick="if(event.target===this) app.closeSymbolModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Inserir Caracteres e Emojis</h3>
+                <button class="modal-close" onclick="app.closeSymbolModal()">&times;</button>
+            </div>
+            <div class="modal-tabs">
+                <button class="tab-btn active" onclick="app.switchTab('math', this)">Matemática</button>
+                <button class="tab-btn" onclick="app.switchTab('greek', this)">Grego</button>
+                <button class="tab-btn" onclick="app.switchTab('arrows', this)">Setas</button>
+                <button class="tab-btn" onclick="app.switchTab('emojis', this)">Emojis</button>
+            </div>
+            <div class="modal-body">
+                <div id="tab-math" class="symbol-grid active-grid"></div>
+                <div id="tab-greek" class="symbol-grid"></div>
+                <div id="tab-arrows" class="symbol-grid"></div>
+                <div id="tab-emojis" class="emoji-container">
+                    <emoji-picker></emoji-picker>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
