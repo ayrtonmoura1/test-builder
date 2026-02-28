@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Avaliação</title>
+    <title>Gerador de Avaliações</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script defer src="https://unpkg.com/mathlive"></script>
@@ -62,14 +62,16 @@
         <div class="tools-section">
             <h3>Finalizar</h3>
             <div class="btn-grid">
-    <button class="btn-secondary" onclick="window.print()"><i class="ph ph-printer"></i> Gerar PDF</button>
-    <button class="btn-excel" onclick="app.exportXLSX()"><i class="ph ph-file-xls"></i> Gabarito</button>
-</div>
+                <button class="btn-secondary" onclick="window.print()"><i class="ph ph-printer"></i> PDF (Aluno)</button>
+                <button class="btn-secondary" onclick="printWithAnswers()" style="background: #059669; border-color: #047857;"><i class="ph ph-chalkboard-teacher"></i> PDF (Professor)</button>
+                <button class="btn-excel btn-full" onclick="app.exportXLSX()"><i class="ph ph-file-xls"></i> Gabarito em Excel</button>
+            </div>
         </div>
 
         <div class="tools-section bottom-tools">
             <button class="btn-danger btn-full" onclick="app.clearData()"><i class="ph ph-trash"></i> Reiniciar Tudo</button>
         </div>
+        <h5>Desenvolvido por <strong>Ayrton Moura Souza Lima</strong></h5>
     </aside>
 
     <main class="paper-container" onclick="app.handleGlobalClick(event)">
@@ -134,7 +136,7 @@
                 <button class="tab-btn" onclick="app.switchTab('arrows', this)">Setas</button>
                 <button class="tab-btn" onclick="app.switchTab('emojis', this)">Emojis</button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body modal-symbols-body">
                 <div id="tab-math" class="symbol-grid active-grid"></div>
                 <div id="tab-greek" class="symbol-grid"></div>
                 <div id="tab-arrows" class="symbol-grid"></div>
@@ -143,11 +145,44 @@
                 </div>
             </div>
         </div>
-        
+    </div>
+
+    <div id="bnccModalOverlay" class="modal-overlay no-print" style="display: none;" onclick="if(event.target===this) app.closeBnccModal()">
+        <div class="modal-content" style="width: 750px; max-width: 95vw; height: 85vh; max-height: 650px; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h3><i class="ph ph-list-numbers"></i> Consultar Habilidades BNCC</h3>
+                <button class="modal-close" onclick="app.closeBnccModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 15px; display: flex; flex-direction: column; gap: 12px; height: 100%; overflow: hidden; background: #f8fafc;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <select id="bnccEtapa" onchange="app.updateBnccDisciplinas()" style="padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 13px; font-weight: bold; color: var(--text-main); flex: 1;">
+                        <option value="">1. Selecione a Etapa...</option>
+                        <option value="infantil">Educação Infantil</option>
+                        <option value="fundamental">Ensino Fundamental</option>
+                        <option value="medio">Ensino Médio</option>
+                    </select>
+                    <select id="bnccDisciplina" disabled style="padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 13px; font-weight: bold; color: var(--text-main); flex: 1;">
+                        <option value="">2. Selecione a Disciplina/Campo...</option>
+                    </select>
+                    <button class="btn-primary" onclick="app.fetchBnccData()" style="padding: 8px 15px;"><i class="ph ph-magnifying-glass"></i> Buscar</button>
+                </div>
+                <div>
+                    <input type="text" id="bnccSearchInput" placeholder="🔍 Digite para filtrar os resultados abaixo por código ou trecho do texto..." style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 13px;" oninput="app.filterBnccResults()">
+                </div>
+                <div id="bnccResults" style="flex: 1; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; background: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                    <p style="text-align: center; color: var(--text-muted); margin-top: 30px;">
+                        <i class="ph ph-books" style="font-size: 40px; opacity: 0.5;"></i><br>
+                        Utilize os filtros acima e clique em "Buscar" para carregar as habilidades.
+                    </p>
+                </div>
+                <div style="display: flex; justify-content: flex-end; padding-top: 10px; border-top: 1px solid var(--border-color);">
+                    <button class="btn-primary" onclick="app.insertSelectedBncc()" style="font-size: 13px; padding: 10px 20px;"><i class="ph ph-check-square-offset"></i> Inserir Selecionadas no Bloco</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
+    <script src="print.js"></script> </body>
 </body>
-
 </html>
-
