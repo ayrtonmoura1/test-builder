@@ -56,7 +56,7 @@ button i { font-size: 16px; }
 .paper-container { flex: 1; overflow-y: auto; display: block; padding: 40px 0; position: relative; scroll-behavior: auto; }
 .paper { background: var(--paper-color); width: 210mm; min-height: 297mm; height: max-content; margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.15); padding: 15mm 15mm 25mm 15mm; border-radius: 2px; }
 
-/* NOVO: Alternância Global de Colunas */
+/* Alternância Global de Colunas */
 .blocks-container { display: block; }
 .blocks-container.cols-1 { column-count: 1; }
 .blocks-container.cols-2 { 
@@ -88,8 +88,8 @@ button i { font-size: 16px; }
 /* --- BLOCOS E DRAG --- */
 .block-item { 
     background: white; 
-    padding: 8px; /* Voltou ao normal */
-    border: 1px solid transparent; /* Removeu a borda de baixo */
+    padding: 8px; 
+    border: 1px solid transparent; 
     border-radius: 6px; 
     transition: border-color 0.2s, transform 0.2s ease; 
     position: relative; 
@@ -102,13 +102,12 @@ button i { font-size: 16px; }
     width: 100%;
 }
 
-/* NOVO: Lógica do Cadeado para Colunas */
 .block-unlocked { width: 100%; }
 .block-locked { 
-    column-span: all; /* Essencial: Força o navegador a parar as colunas */
+    column-span: all; 
     width: 100%; 
-    margin-top: 25px !important;    /* NOVO: Força um respiro ACIMA do bloco largo */
-    margin-bottom: 25px !important; /* NOVO: Força um respiro ABAIXO do bloco largo */
+    margin-top: 25px !important;    
+    margin-bottom: 25px !important; 
 }
 
 .block-item:hover { border-color: var(--border-color); }
@@ -117,7 +116,7 @@ button i { font-size: 16px; }
 .drag-handle { cursor: grab; color: #94a3b8; padding: 2px; font-size: 18px; margin-right: 5px; display: inline-flex; align-items: center; }
 .drag-handle:active { cursor: grabbing; }
 
-/* NOVO: Linhas de Drag Inteligente (Apenas Vertical) */
+/* Linhas de Drag Inteligente (Apenas Vertical) */
 .block-item.drag-over-top { border-top: 4px solid var(--primary-color) !important; border-top-left-radius: 0; border-top-right-radius: 0; box-shadow: 0 -4px 10px rgba(37, 99, 235, 0.2); }
 .block-item.drag-over-bottom { border-bottom: 4px solid var(--primary-color) !important; border-bottom-left-radius: 0; border-bottom-right-radius: 0; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); }
 
@@ -126,7 +125,7 @@ button i { font-size: 16px; }
 .block-controls { display: flex; gap: 5px; }
 .block-controls button { padding: 4px; font-size: 14px; background: transparent; border-color: transparent; color: #94a3b8; transition: all 0.2s; }
 .block-controls button:hover { background: #e2e8f0; color: var(--text-main); }
-.block-controls button.locked-btn { color: #f59e0b; } /* Visual claro quando está bloqueado */
+.block-controls button.locked-btn { color: #f59e0b; } 
 .block-controls button.unlocked-btn { color: #10b981; }
 .block-controls .btn-danger:hover { background: #fee2e2; color: var(--danger-color); }
 
@@ -139,7 +138,7 @@ button i { font-size: 16px; }
 .q-label-float { 
     display: flex; 
     align-items: center; 
-    justify-content: flex-start; /* GARANTE que o texto fique grudado na esquerda */
+    justify-content: flex-start; 
     width: 100%; 
     font-weight: 900; 
     font-family: 'Arial Black', Arial, sans-serif; 
@@ -154,12 +153,11 @@ button i { font-size: 16px; }
     margin-bottom: 6px; 
 }
 
-/* NOVO: Estilo da Numeração Automática */
 .auto-q-number {
-    font-size: inherit; /* Fica do mesmo tamanho da palavra QUESTÃO */
-    color: black; /* Muda a cor de azul para preto */
-    margin-left: 5px; /* Dá um espaço natural após a palavra QUESTÃO */
-    font-family: inherit; /* Herda a mesma fonte para parecer uma continuação exata */
+    font-size: inherit;
+    color: black; 
+    margin-left: 5px; 
+    font-family: inherit; 
 }
 
 .question-text, .alt-text { font-size: var(--dynamic-font-size); line-height: 1.4; outline: none; text-align: justify; }
@@ -196,7 +194,7 @@ math-field::part(menu-toggle), math-field::part(virtual-keyboard-toggle) { displ
 .tab-btn { flex: 1; padding: 12px 0; background: transparent; border: none; border-bottom: 3px solid transparent; font-size: 13px; font-weight: bold; color: var(--text-muted); cursor: pointer; border-radius: 0; transition: 0.2s; }
 .tab-btn:hover { color: var(--primary-color); }
 .tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-.modal-body { padding: 15px; height: 300px; overflow-y: auto; background: #f8fafc; }
+.modal-symbols-body { padding: 15px; height: 300px; overflow-y: auto; background: #f8fafc; }
 .symbol-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(35px, 1fr)); gap: 6px; }
 .symbol-grid.active-grid { display: grid; }
 .symbol-grid button { width: 100%; aspect-ratio: 1; display: flex; justify-content: center; align-items: center; font-size: 18px; border: 1px solid var(--border-color); background: white; border-radius: 6px; cursor: pointer; padding: 0; margin: 0; transition: 0.1s; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
@@ -214,6 +212,11 @@ emoji-picker { width: 100%; height: 270px; --background: #f8fafc; border: none; 
 .rtf-toolbar button:hover { background: #e2e8f0; border-color: #cbd5e1; }
 .btn-math { color: var(--primary-color) !important; background: #eff6ff !important; border-color: #bfdbfe !important; }
 .btn-math:hover { background: #dbeafe !important; }
+
+/* NOVO: Estilo visual pro botão de BNCC ficar em destaque */
+.btn-bncc { color: var(--import-color) !important; background: #f5f3ff !important; border-color: #ddd6fe !important; }
+.btn-bncc:hover { background: #ede9fe !important; }
+
 .rtf-divider { width: 1px; height: 16px; background: #cbd5e1; margin: 0 3px; }
 
 /* Alternativas */
@@ -238,10 +241,12 @@ emoji-picker { width: 100%; height: 270px; --background: #f8fafc; border: none; 
 
 .gabarito-container { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px; border-radius: 4px; }
 .gabarito-container label { font-size: 11px; font-weight: bold; color: #166534; display: block; margin-bottom: 4px; }
-.gabarito-input { width: 100%; background: transparent; border: none; outline: none; font-size: 12px; color: #14532d; min-height: 30px; resize: vertical; border-bottom: 1px dashed #86efac; }
+.gabarito-input { width: 100%; background: transparent; border: none; outline: none; font-size: 12px; color: #14532d; min-height: 30px; resize: vertical; border-bottom: 1px dashed #86efac; font-family: inherit; }
+
 .habilidade-container { background: #fefce8; border: 1px solid #fef08a; padding: 8px; border-radius: 4px; }
 .habilidade-container label { font-size: 11px; font-weight: bold; color: #ca8a04; display: block; margin-bottom: 4px; }
-.habilidade-input { width: 100%; background: transparent; border: none; outline: none; font-size: 12px; color: #854d0e; }
+/* NOVO: Atualizado para se comportar bem como uma Textarea com quebras de linha */
+.habilidade-input { width: 100%; background: transparent; border: none; outline: none; font-size: 12px; color: #854d0e; min-height: 45px; resize: vertical; border-bottom: 1px dashed #fde047; font-family: inherit; }
 
 .setup-mode { background: white; padding: 15px; border-radius: 6px; text-align: center; border: 1px dashed var(--primary-color); margin-top: 10px; }
 .setup-mode h4 { margin-bottom: 10px; font-size: 13px; color: var(--primary-color); }
@@ -310,16 +315,15 @@ emoji-picker { width: 100%; height: 270px; --background: #f8fafc; border: none; 
     body, .paper-container { background: white; padding: 0; margin: 0; display: block; overflow: visible; height: auto; }
     .paper { box-shadow: none; width: 100%; height: auto; padding: 0; margin: 0; border: none; }
     
-    /* NOVO: Impede o balanceamento de colunas no final da página! */
     .blocks-container { 
         display: block; 
-        column-fill: auto !important; /* OBRIGA a preencher a esquerda toda primeiro */
+        column-fill: auto !important;
     }
     
     .block-item { 
-        border: none !important; /* Borda removida da impressão */
+        border: none !important; 
         background: transparent !important; 
-        padding: 0; /* Espaçamento voltou ao normal */
+        padding: 0; 
         margin-bottom: 15px; 
         box-shadow: none !important; 
         display: block; 
@@ -329,10 +333,8 @@ emoji-picker { width: 100%; height: 270px; --background: #f8fafc; border: none; 
     }
     .block-locked { column-span: all; display: block; margin-top: 25px !important; margin-bottom: 25px !important; }
 
-    /* NOVO: Desativa o flexbox nas alternativas durante a impressão para não bugar a quebra */
     .alternatives-container { display: block !important; }
 
-    /* NOVO: Protege os elementos sensíveis de serem cortados ao meio com a tesoura */
     .q-label-float,         
     .question-header,       
     .alternative-item,      
@@ -341,7 +343,6 @@ emoji-picker { width: 100%; height: 270px; --background: #f8fafc; border: none; 
         page-break-inside: avoid !important; 
     }
     
-    /* NOVO: Mantém o espaçamento das alternativas que antes era feito pelo flexbox */
     .alternative-item { margin-bottom: 4px; }
 
     .spacer-content { border: none !important; background: transparent !important; }
@@ -361,4 +362,38 @@ emoji-picker { width: 100%; height: 270px; --background: #f8fafc; border: none; 
         border-bottom: none !important;
     }
 
+}
+
+/* --- IMPRESSÃO DO PROFESSOR (COM RESPOSTAS E HABILIDADES) --- */
+@media print {
+    /* Exibe os campos de Habilidade e Gabarito Esperado (Dissertativas) */
+    body.print-with-answers .teacher-fields {
+        display: flex !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+    
+    /* Exibe as bolinhas (radios) para mostrar a alternativa correta */
+    body.print-with-answers .alt-radio {
+        display: inline-block !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Exibe os botões V/F marcados em verde/vermelho */
+    body.print-with-answers .vf-toggle {
+        display: inline-block !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Esconde aquele parêntese "(  )" vazio do V/F do aluno */
+    body.print-with-answers .vf-print-box {
+        display: none !important;
+    }
+
+    /* Melhora a visibilidade das caixas de texto de resposta e BNCC na impressão */
+   .gabarito-input { width: 100%; background: transparent; border: none; outline: none; font-size: 12px; color: #14532d; min-height: 30px; resize: none; overflow: hidden; border-bottom: 1px dashed #86efac; font-family: inherit; }
+
+.habilidade-input { width: 100%; background: transparent; border: none; outline: none; font-size: 12px; color: #854d0e; min-height: 45px; resize: none; overflow: hidden; border-bottom: 1px dashed #fde047; font-family: inherit; }
 }
