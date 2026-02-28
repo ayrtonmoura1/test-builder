@@ -1,11 +1,52 @@
 const app = {
     state: {
         fontSize: '12px',
-        columns: 1, // NOVO: Controle global de colunas (1 ou 2)
+        columns: 1, 
         blocks: [],
         activeBlockId: null,
         savedSelection: null
     },
+
+    // --- MATRIZ DA BNCC (URLs DA API EXTERNA) ---
+    bnccConfig: {
+        infantil: {
+            url: 'https://cientificar1992.pythonanywhere.com/bncc_infantil/?format=json',
+            disciplinas: {
+                'O eu, o outro e o nós': 'O eu, o outro e o nós',
+                'Corpo, gestos e movimentos': 'Corpo, gestos e movimentos',
+                'Traços, sons, cores e formas': 'Traços, sons, cores e formas',
+                'Escuta, fala, pensamento e imaginação': 'Escuta, fala, pensamento e imaginação',
+                'Espaços, tempos, quantidades': 'Espaços, tempos, quantidades, relações e transformações'
+            }
+        },
+        fundamental: {
+            url: 'https://cientificar1992.pythonanywhere.com/bncc_fundamental/?format=json',
+            disciplinas: {
+                'lingua_portuguesa': 'Língua Portuguesa',
+                'arte': 'Arte',
+                'educacao_fisica': 'Educação Física',
+                'lingua_inglesa': 'Língua Inglesa',
+                'matematica': 'Matemática',
+                'ciencias': 'Ciências',
+                'geografia': 'Geografia',
+                'historia': 'História',
+                'ensino_religioso': 'Ensino Religioso',
+                'computacao': 'Computação'
+            }
+        },
+        medio: {
+            url: 'https://cientificar1992.pythonanywhere.com/bncc_medio/?format=json',
+            disciplinas: {
+                'linguagens': 'Linguagens e suas Tecnologias',
+                'matematica_medio': 'Matemática e suas Tecnologias',
+                'ciencias_natureza': 'Ciências da Natureza e suas Tecnologias',
+                'ciencias_humanas': 'Ciências Humanas e Sociais Aplicadas',
+                'lingua_portuguesa_medio': 'Língua Portuguesa',
+                'computacao_medio': 'Computação'
+            }
+        }
+    },
+    bnccCurrentData: [],
 
     init() {
         this.loadState();
@@ -22,7 +63,7 @@ const app = {
     },
 
     handleGlobalClick(event) {
-        if(!event.target.closest('.block-item') && !event.target.closest('.toolbar') && !event.target.closest('.modal-overlay') && !event.target.closest('.btn-open-symbols')) {
+        if(!event.target.closest('.block-item') && !event.target.closest('.toolbar') && !event.target.closest('.modal-overlay') && !event.target.closest('.btn-open-symbols') && !event.target.closest('.btn-bncc')) {
             this.setActiveBlock(null);
         }
     },
@@ -114,6 +155,240 @@ const app = {
         document.getElementById('symbolModalOverlay').style.display = 'none';
         this.state.savedSelection = null;
     },
+
+    // --- FUNÇÕES MODAL BNCC (APIs Online) ---
+    openBnccModal() {
+        if (!this.state.activeBlockId) {
+            alert('Você precisa clicar dentro de um bloco de questão antes de inserir uma habilidade.');
+            return;
+        }
+        this.saveState();
+        document.getElementById('bnccModalOverlay').style.display = 'flex';
+        // Limpa a busca anterior
+        document.getElementById('bnccSearchInput').value = ''; 
+    },
+
+    closeBnccModal() {
+        document.getElementById('bnccModalOverlay').style.display = 'none';
+    },
+
+    updateBnccDisciplinas() {
+        const etapa = document.getElementById('bnccEtapa').value;
+        const discSelect = document.getElementById('bnccDisciplina');
+        discSelect.innerHTML = '<option value="">2. Selecione a Disciplina/Campo...</option>';
+        
+        if(!etapa) {
+            discSelect.disabled = true;
+            return;
+        }
+        
+        discSelect.disabled = false;
+        const disciplinas = this.bnccConfig[etapa].disciplinas;
+        for(const key in disciplinas) {
+            discSelect.innerHTML += `<option value="${key}">${disciplinas[key]}</option>`;
+        }
+    },
+
+    async fetchBnccData() {
+        const etapa = document.getElementById('bnccEtapa').value;
+        const disciplina = document.getElementById('bnccDisciplina').value;
+        const resultsContainer = document.getElementById('bnccResults');
+        
+        if(!etapa || !disciplina) {
+            alert("Selecione a etapa e a disciplina.");
+            return;
+        }
+        
+        resultsContainer.innerHTML = '<p style="text-align:center; padding: 20px;"><strong>Carregando base de dados da BNCC online...</strong><br><small>Isso pode levar alguns segundos.</small></p>';
+        
+        const url = this.bnccConfig[etapa].url;
+        
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Não foi possível acessar a API: " + url);
+            const data = await response.json();
+            
+            let list = [];
+
+            // Função auxiliar para procurar a chave correta independente se a API retorna Objeto ou Array de Objetos
+            const getNestedData = (apiData, key) => {
+                if (Array.isArray(apiData)) {
+                    for (let item of apiData) {
+                        if (item[key]) return item[key];
+                    }
+                }
+                return apiData[key] || apiData;
+            };
+
+            // Varredura da estrutura do JSON baseado na etapa selecionada
+            if (etapa === 'infantil') {
+                const eiData = getNestedData(data, 'educacao_infantil');
+                // Ajustado para refletir as chaves corretas do seu JSON (campos_experiencia e faixas_etarias)
+                const campos = eiData.campos_experiencia || eiData.campos_de_experiencias || [];
+                
+                const campoEncontrado = campos.find(c => c.nome_campo.toLowerCase().includes(disciplina.toLowerCase()) || disciplina.toLowerCase().includes(c.nome_campo.toLowerCase()));
+                if (campoEncontrado) {
+                    const faixas = campoEncontrado.faixas_etarias || campoEncontrado.objetivos_aprendizagem || [];
+                    faixas.forEach(faixa => {
+                        if (faixa.objetivos) {
+                            faixa.objetivos.forEach(obj => {
+                                list.push({ codigo: obj.codigo, descricao: obj.descricao, extra: faixa.nome_faixa });
+                            });
+                        }
+                    });
+                }
+            } else if (etapa === 'fundamental') {
+                const discData = getNestedData(data, disciplina);
+                if (discData && discData.ano) {
+                    discData.ano.forEach(a => {
+                        if(a.unidades_tematicas) {
+                            a.unidades_tematicas.forEach(u => {
+                                if(u.objeto_conhecimento) {
+                                    u.objeto_conhecimento.forEach(o => {
+                                        if(o.habilidades) {
+                                            o.habilidades.forEach(h => {
+                                                // Isola o código e o texto da habilidade
+                                                let match = h.nome_habilidade.match(/^\((.*?)\)\s*(.*)/);
+                                                if(match) {
+                                                    list.push({codigo: match[1], descricao: match[2], extra: a.nome_ano.join(', ')});
+                                                } else {
+                                                    list.push({codigo: '', descricao: h.nome_habilidade, extra: a.nome_ano.join(', ')});
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            } else if (etapa === 'medio') {
+                const discData = getNestedData(data, disciplina);
+                if (discData && discData.ano) {
+                    discData.ano.forEach(a => {
+                        if(a.codigo_habilidade) {
+                            a.codigo_habilidade.forEach(h => {
+                                list.push({codigo: h.nome_codigo, descricao: h.nome_habilidade, extra: a.nome_ano.join(', ')});
+                            });
+                        }
+                    });
+                }
+            }
+
+            this.bnccCurrentData = list;
+            this.renderBnccResults(list);
+            
+            // Re-aplica o filtro caso o usuário tenha digitado algo antes de carregar
+            this.filterBnccResults(); 
+
+        } catch (e) {
+            resultsContainer.innerHTML = `<p style="text-align:center; color: var(--danger-color); padding: 20px;">
+                Erro ao carregar os dados. Verifique sua conexão com a internet ou se a API está online.
+            </p>`;
+            console.error("Erro BNCC Fetch:", e);
+        }
+    },
+
+    renderBnccResults(dataArray) {
+        const resultsContainer = document.getElementById('bnccResults');
+        resultsContainer.innerHTML = '';
+        
+        if(!dataArray || dataArray.length === 0) {
+            resultsContainer.innerHTML = '<p style="text-align:center; margin-top: 20px;">Nenhum resultado encontrado nesta categoria.</p>';
+            return;
+        }
+        
+        dataArray.forEach((item, index) => {
+            const codigo = item.codigo || '';
+            const descricao = item.descricao || '';
+            const extra = item.extra ? `<br><small style="color:var(--text-muted)"><strong>Etapa/Ano:</strong> ${item.extra}</small>` : '';
+
+            const div = document.createElement('div');
+            div.style.marginBottom = '8px';
+            div.style.padding = '10px';
+            div.style.border = '1px solid #e2e8f0';
+            div.style.borderRadius = '6px';
+            div.style.display = 'flex';
+            div.style.gap = '12px';
+            div.style.alignItems = 'flex-start';
+            div.style.transition = 'background 0.2s';
+            
+            // O value do checkbox recebe apenas o INDEX numérico (Evita quebrar o HTML com aspas duplas no texto)
+            div.innerHTML = `
+                <input type="checkbox" class="bncc-checkbox" id="bncc_item_${index}" value="${index}" style="margin-top: 4px; transform: scale(1.2); cursor: pointer;">
+                <label for="bncc_item_${index}" style="font-size: 12px; cursor: pointer; line-height: 1.5; flex: 1; user-select: none;">
+                    ${codigo ? `<strong style="color: var(--primary-color);">${codigo}</strong> - ` : ''}
+                    ${descricao}
+                    ${extra}
+                </label>
+            `;
+            resultsContainer.appendChild(div);
+        });
+    },
+
+    filterBnccResults() {
+        // Pega o texto, converte pra minúsculo e remove acentos para busca flexível
+        const rawTerm = document.getElementById('bnccSearchInput').value;
+        const term = rawTerm.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const items = document.querySelectorAll('#bnccResults > div');
+        
+        items.forEach(item => {
+            const text = item.innerText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if(text.includes(term)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    },
+
+    insertSelectedBncc() {
+        const checkboxes = document.querySelectorAll('.bncc-checkbox:checked');
+        if(checkboxes.length === 0) {
+            alert('Marque ao menos uma caixa para inserir.');
+            return;
+        }
+        
+        let combinedText = [];
+        checkboxes.forEach(cb => {
+            // Usa o Index para buscar o texto limpo direto da Matriz em memória
+            const index = parseInt(cb.value);
+            const item = this.bnccCurrentData[index];
+            if(item) {
+                const line = (item.codigo ? `${item.codigo} - ` : '') + item.descricao;
+                combinedText.push(line);
+            }
+        });
+        
+        if (this.state.activeBlockId) {
+            const blockEl = document.querySelector(`[data-id="${this.state.activeBlockId}"]`);
+            if (blockEl) {
+                const habInput = blockEl.querySelector('.habilidade-input');
+                if (habInput) {
+                    const currentVal = habInput.value.trim();
+                    
+                    // Adiciona quebra de linha dupla para visualização bonita
+                    if(currentVal) {
+                        habInput.value = currentVal + '\n\n' + combinedText.join('\n\n');
+                    } else {
+                        habInput.value = combinedText.join('\n\n');
+                    }
+                    
+                    // Dispara evento para salvar no LocalStorage e dá um feedback visual verde rápido
+                    habInput.dispatchEvent(new Event('input', { bubbles: true })); 
+                    this.saveState();
+                    
+                    habInput.style.backgroundColor = '#dcfce7';
+                    setTimeout(() => habInput.style.backgroundColor = 'transparent', 600);
+                    
+                } else {
+                    alert('Este bloco não possui o campo de habilidade.');
+                }
+            }
+        }
+        this.closeBnccModal();
+    },
+    // --- FIM FUNÇÕES BNCC ---
 
     switchTab(tabId, btnElement) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -274,7 +549,6 @@ const app = {
         URL.revokeObjectURL(url);
     },
 
-    // NOVO: Importação com Renumeração e Cadeado
     importJSON(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -286,14 +560,13 @@ const app = {
                 if (Array.isArray(importedBlocks)) {
                     importedBlocks.forEach(block => {
                         block.id = this.generateId();
-                        // Garante que o bloco antigo ganhe a propriedade locked
                         if(block.locked === undefined) {
                             block.locked = block.width === 'narrow' ? false : true; 
                         }
-                        this.state.blocks.push(block); // Anexa ao final
+                        this.state.blocks.push(block); 
                     });
                     
-                    this.renderBlocks(); // A renderização já cuida de re-enumerar todas as questões!
+                    this.renderBlocks(); 
                     this.saveState();
                     alert(`${importedBlocks.length} blocos importados com sucesso!`);
                     
@@ -353,7 +626,6 @@ const app = {
             const type = blockEl.dataset.type;
             const mode = blockEl.dataset.mode;
             const originalBlock = this.state.blocks.find(b => b.id === id) || {};
-            // NOVO: Preserva a propriedade locked ao salvar
             const locked = originalBlock.locked !== undefined ? originalBlock.locked : true;
 
             if (type === 'divider') {
@@ -404,13 +676,11 @@ const app = {
                         correctVF: correctVFArray,
                         correctText: blockEl.querySelector('.gabarito-input') ? blockEl.querySelector('.gabarito-input').value : '',
                         habilidade: blockEl.querySelector('.habilidade-input') ? blockEl.querySelector('.habilidade-input').value : originalBlock.habilidade
-                        // NOVO: qNumber manual removido do estado.
                     });
                 }
             }
         });
 
-        // NOVO: Salva estado das colunas
         const dataToSave = { fontSize: this.state.fontSize, columns: this.state.columns, header: headerData, blocks };
         localStorage.setItem('enemBuilder_v53', JSON.stringify(dataToSave));
         this.state.blocks = blocks;
@@ -423,7 +693,6 @@ const app = {
             this.state.fontSize = data.fontSize || '12px';
             document.getElementById('fontSizeSelect').value = this.state.fontSize;
 
-            // NOVO: Recupera estado das colunas
             if (data.columns !== undefined) this.state.columns = data.columns;
 
             if(data.header) {
@@ -440,7 +709,6 @@ const app = {
                 }
             }
             if(data.blocks) {
-                // NOVO: Migra dados antigos (width -> locked)
                 data.blocks.forEach(b => { 
                     if(b.locked === undefined) {
                         b.locked = (b.width === 'narrow') ? false : true;
@@ -465,11 +733,19 @@ const app = {
         document.querySelectorAll('.block-item').forEach(el => el.classList.remove('active'));
         if(id) {
             const el = document.querySelector(`[data-id="${id}"]`);
-            if(el) el.classList.add('active');
+            if(el) {
+                el.classList.add('active');
+                // NOVO: Ajusta a altura da textarea assim que o bloco se torna visível
+                setTimeout(() => {
+                    el.querySelectorAll('textarea').forEach(ta => {
+                        ta.style.height = 'auto';
+                        ta.style.height = ta.scrollHeight + 'px';
+                    });
+                }, 10);
+            }
         }
     },
 
-    // NOVO: Função Global para alternar modo de colunas da prova inteira
     toggleColumns() {
         this.state.columns = this.state.columns === 1 ? 2 : 1;
         this.applyColumnState();
@@ -490,19 +766,18 @@ const app = {
         }
     },
 
-    // NOVO: Controle de Cadeado por Bloco
     toggleBlockLock(id) {
         this.saveState();
         const block = this.state.blocks.find(b => b.id === id);
         if(block) {
-            block.locked = !block.locked; // Inverte o estado
+            block.locked = !block.locked;
             this.renderBlocks();
             this.saveState();
         }
     },
 
     renderBlocks() {
-        this.applyColumnState(); // Garante o layout visual
+        this.applyColumnState(); 
         const container = document.getElementById('blocksContainer');
         const scrollContainer = document.querySelector('.paper-container');
         
@@ -511,13 +786,10 @@ const app = {
 
         container.innerHTML = '';
 
-        // NOVO: Processamento da Numeração Automática (sem input manual)
         let questionCounter = 1;
 
         this.state.blocks.forEach((block) => {
             let el;
-            
-            // Atribui o número da questão em tempo de renderização
             if (block.type === 'question') {
                 block.autoNumber = questionCounter++;
             }
@@ -530,13 +802,12 @@ const app = {
                 else el = this.createQuestionEditDOM(block);
             }
             
-            // NOVO: Aplica a classe CSS do Cadeado (Locked vs Unlocked)
             el.classList.add(block.locked ? 'block-locked' : 'block-unlocked');
 
             if(block.id === this.state.activeBlockId) el.classList.add('active');
             
             el.addEventListener('mousedown', (e) => {
-                if(!e.target.closest('.drag-handle') && !e.target.closest('math-field') && !e.target.closest('.delete-math') && !e.target.closest('button') && !e.target.closest('input.spacer-slider')) {
+                if(!e.target.closest('.drag-handle') && !e.target.closest('math-field') && !e.target.closest('.delete-math') && !e.target.closest('button') && !e.target.closest('input.spacer-slider') && !e.target.closest('textarea.habilidade-input')) {
                     this.setActiveBlock(block.id);
                 }
             });
@@ -602,7 +873,6 @@ const app = {
 
     draggedId: null,
 
-    // NOVO: Drag events modificados para permitir apenas movimento Vertical
     attachDragEvents(div, blockId) {
         const handle = div.querySelector('.drag-handle');
         if(!handle) return;
@@ -614,7 +884,7 @@ const app = {
             this.draggedId = blockId; 
             e.dataTransfer.effectAllowed = 'move'; 
             div.style.opacity = '0.5'; 
-            this.setActiveBlock(null); // Desmarca edição no drag
+            this.setActiveBlock(null);
         });
         
         div.addEventListener('dragend', () => { 
@@ -632,7 +902,6 @@ const app = {
             
             div.classList.remove('drag-over-top', 'drag-over-bottom');
             
-            // Avaliação apenas vertical (top ou bottom)
             const isAfter = e.clientY > (rect.top + rect.height / 2);
             if (isAfter) {
                 div.classList.add('drag-over-bottom');
@@ -665,7 +934,6 @@ const app = {
         
         if(draggedIndex > -1 && targetIndex > -1) {
             const [draggedBlock] = this.state.blocks.splice(draggedIndex, 1);
-            
             targetIndex = this.state.blocks.findIndex(b => b.id === targetId);
             
             if (position === 'after') {
@@ -679,7 +947,6 @@ const app = {
         }
     },
 
-    // NOVO: Todos os blocos novos nascem "locked: true" (100% de largura)
     addDivider() {
         this.saveState();
         this.insertBlockContextually({ id: this.generateId(), type: 'divider', locked: true, text: 'LINGUAGENS, CÓDIGOS E SUAS TECNOLOGIAS', mode: 'edit' });
@@ -723,7 +990,6 @@ const app = {
         div.className = 'question-block block-item no-print';
         div.dataset.id = block.id; div.dataset.type = 'question'; div.dataset.mode = 'setup';
 
-        // NOVO: Renderiza o Cadeado no setup
         div.innerHTML = `
             <div class="question-header">
                 <div class="question-header-left"><span class="drag-handle" title="Arraste para reordenar"><i class="ph ph-dots-six-vertical"></i></span></div>
@@ -811,6 +1077,8 @@ const app = {
                 <button type="button" title="Inserir Equação" class="btn-math" onmousedown="event.preventDefault(); app.insertMath()"><b>&sum; Eq</b></button>
                 <div class="rtf-divider"></div>
                 <button type="button" title="Símbolos e Emojis" class="btn-open-symbols" onmousedown="event.preventDefault(); app.openSymbolModal()"><i class="ph ph-smiley"></i> &Omega;</button>
+                <div class="rtf-divider"></div>
+                <button type="button" title="Consultar e Inserir BNCC" class="btn-bncc" onmousedown="event.preventDefault(); app.openBnccModal()"><i class="ph ph-list-numbers"></i> BNCC</button>
             </div>
         `;
     },
@@ -820,7 +1088,6 @@ const app = {
         div.className = 'text-block block-item';
         div.dataset.id = block.id; div.dataset.type = 'text'; div.dataset.mode = 'edit';
 
-        // NOVO: Cadeado na UI e Removido input manual de questão
         div.innerHTML = `
             <div class="question-header no-print">
                 <div class="question-header-left">
@@ -849,7 +1116,6 @@ const app = {
         div.className = 'spacer-block block-item';
         div.dataset.id = block.id; div.dataset.type = 'spacer'; div.dataset.mode = 'edit';
 
-        // NOVO: Cadeado na UI
         div.innerHTML = `
             <div class="question-header no-print">
                 <div class="question-header-left">
@@ -919,7 +1185,6 @@ const app = {
             contentHTML += `<div class="open-lines-container">${linesHTML}</div>`;
         }
 
-        // NOVO: Numeração dinâmica via autoNumber em vez de input na tela
         div.innerHTML = `
             <div class="question-header no-print">
                 <div class="question-header-left"><span class="drag-handle" title="Arraste para reordenar"><i class="ph ph-dots-six-vertical"></i></span></div>
@@ -948,14 +1213,21 @@ const app = {
                 </div>
                 <div class="habilidade-container">
                     <label><i class="ph ph-target"></i> HABILIDADE COBRADA</label>
-                    <input type="text" class="habilidade-input" value="${block.habilidade}" placeholder="Descreva o que esta questão avalia..." oninput="app.saveState()">
+                    <textarea class="habilidade-input" placeholder="Descreva o que esta questão avalia (insira BNCC)..." oninput="app.saveState()">${block.habilidade || ''}</textarea>
                 </div>
             </div>
         `;
 
         div.querySelector('.question-text').addEventListener('input', () => this.saveState());
         div.querySelectorAll('.alt-text').forEach(el => el.addEventListener('input', () => this.saveState()));
-
+        // NOVO: Evento que auto-ajusta a altura ao digitar ou ao receber o texto da BNCC
+        div.querySelectorAll('textarea').forEach(ta => {
+            ta.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+                app.saveState();
+            });
+        });
         return div;
     },
 
@@ -963,7 +1235,6 @@ const app = {
         const div = document.createElement('div');
         div.className = 'divider-block block-item'; div.dataset.id = block.id; div.dataset.type = 'divider'; div.dataset.mode = 'edit';
         
-        // NOVO: Cadeado na UI
         div.innerHTML = `
             <div class="question-header no-print">
                 <div class="question-header-left">
@@ -987,7 +1258,6 @@ const app = {
         this.saveState();
         const data = [];
         
-        // NOVO: Contador dinâmico exclusivo para garantir a numeração no Excel
         let questionCounter = 1; 
 
         this.state.blocks.forEach(block => {
@@ -1014,7 +1284,7 @@ const app = {
                 }
 
                 data.push({
-                    "Questão": questionCounter++, // NOVO: Agora usa o contador que soma +1 a cada questão encontrada
+                    "Questão": questionCounter++,
                     "Tipo": block.qType === 'multiple' ? "Múltipla" : (block.qType === 'vf' ? "V/F" : "Aberta"),
                     "Enunciado (Resumo)": plainText.substring(0, 100) + '...',
                     "Letra Correta": gabaritoLetra,
