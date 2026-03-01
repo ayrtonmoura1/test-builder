@@ -187,7 +187,7 @@ const app = {
         }
     },
 
-    async fetchBnccData() {async fetchBnccData() {
+    async fetchBnccData() {
         const etapa = document.getElementById('bnccEtapa').value;
         const disciplina = document.getElementById('bnccDisciplina').value;
         const resultsContainer = document.getElementById('bnccResults');
@@ -1300,4 +1300,5 @@ const app = {
 };
 
 document.addEventListener('DOMContentLoaded', () => app.init());
+
 
