@@ -1,6 +1,5 @@
 // Arquivo: bncc_data.js
-
-const bnccDadosLocais = {
+window.bnccDadosLocais = {
     // 1. EDUCAÇÃO INFANTIL
     infantil: 
         // APAGUE AS CHAVES {} ABAIXO E COLE TODO O CONTEÚDO DO ARQUIVO ei.json AQUI
