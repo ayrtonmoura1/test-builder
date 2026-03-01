@@ -8,9 +8,9 @@ const app = {
     },
 
     // --- MATRIZ DA BNCC (URLs DA API EXTERNA) ---
+    // --- MATRIZ DA BNCC (DADOS LOCAIS DO ARQUIVO bncc_data.js) ---
     bnccConfig: {
         infantil: {
-            url: 'https://cientificar1992.pythonanywhere.com/bncc_infantil/?format=json',
             disciplinas: {
                 'O eu, o outro e o nós': 'O eu, o outro e o nós',
                 'Corpo, gestos e movimentos': 'Corpo, gestos e movimentos',
@@ -20,7 +20,6 @@ const app = {
             }
         },
         fundamental: {
-            url: 'https://cientificar1992.pythonanywhere.com/bncc_fundamental/?format=json',
             disciplinas: {
                 'lingua_portuguesa': 'Língua Portuguesa',
                 'arte': 'Arte',
@@ -35,7 +34,6 @@ const app = {
             }
         },
         medio: {
-            url: 'https://cientificar1992.pythonanywhere.com/bncc_medio/?format=json',
             disciplinas: {
                 'linguagens': 'Linguagens e suas Tecnologias',
                 'matematica_medio': 'Matemática e suas Tecnologias',
@@ -189,7 +187,7 @@ const app = {
         }
     },
 
-    async fetchBnccData() {
+    async fetchBnccData() {async fetchBnccData() {
         const etapa = document.getElementById('bnccEtapa').value;
         const disciplina = document.getElementById('bnccDisciplina').value;
         const resultsContainer = document.getElementById('bnccResults');
@@ -199,18 +197,20 @@ const app = {
             return;
         }
         
-        resultsContainer.innerHTML = '<p style="text-align:center; padding: 20px;"><strong>Carregando base de dados da BNCC online...</strong><br><small>Isso pode levar alguns segundos.</small></p>';
-        
-        const url = this.bnccConfig[etapa].url;
+        resultsContainer.innerHTML = '<p style="text-align:center; padding: 20px;"><strong>Carregando base de dados local...</strong></p>';
         
         try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error("Não foi possível acessar a API: " + url);
-            const data = await response.json();
+            // Puxa os dados diretamente da variável global definida no bncc_data.js
+            const data = bnccDadosLocais[etapa];
+            
+            // Verifica se o usuário realmente colou o JSON lá dentro
+            if (!data || Object.keys(data).length === 0) {
+                throw new Error("Os dados JSON não foram encontrados no arquivo bncc_data.js.");
+            }
             
             let list = [];
 
-            // Função auxiliar para procurar a chave correta independente se a API retorna Objeto ou Array de Objetos
+            // Função auxiliar para procurar a chave correta
             const getNestedData = (apiData, key) => {
                 if (Array.isArray(apiData)) {
                     for (let item of apiData) {
@@ -220,10 +220,9 @@ const app = {
                 return apiData[key] || apiData;
             };
 
-            // Varredura da estrutura do JSON baseado na etapa selecionada
+            // Varredura da estrutura do JSON
             if (etapa === 'infantil') {
                 const eiData = getNestedData(data, 'educacao_infantil');
-                // Ajustado para refletir as chaves corretas do seu JSON (campos_experiencia e faixas_etarias)
                 const campos = eiData.campos_experiencia || eiData.campos_de_experiencias || [];
                 
                 const campoEncontrado = campos.find(c => c.nome_campo.toLowerCase().includes(disciplina.toLowerCase()) || disciplina.toLowerCase().includes(c.nome_campo.toLowerCase()));
@@ -247,7 +246,6 @@ const app = {
                                     u.objeto_conhecimento.forEach(o => {
                                         if(o.habilidades) {
                                             o.habilidades.forEach(h => {
-                                                // Isola o código e o texto da habilidade
                                                 let match = h.nome_habilidade.match(/^\((.*?)\)\s*(.*)/);
                                                 if(match) {
                                                     list.push({codigo: match[1], descricao: match[2], extra: a.nome_ano.join(', ')});
@@ -277,15 +275,13 @@ const app = {
 
             this.bnccCurrentData = list;
             this.renderBnccResults(list);
-            
-            // Re-aplica o filtro caso o usuário tenha digitado algo antes de carregar
             this.filterBnccResults(); 
 
         } catch (e) {
             resultsContainer.innerHTML = `<p style="text-align:center; color: var(--danger-color); padding: 20px;">
-                Erro ao carregar os dados. Verifique sua conexão com a internet ou se a API está online.
+                Erro ao carregar os dados locais. Abra o arquivo <strong>bncc_data.js</strong> e verifique se você colou os JSONs corretamente.<br><br>Detalhe do erro: ${e.message}
             </p>`;
-            console.error("Erro BNCC Fetch:", e);
+            console.error("Erro BNCC Local:", e);
         }
     },
 
@@ -1304,3 +1300,4 @@ const app = {
 };
 
 document.addEventListener('DOMContentLoaded', () => app.init());
+
