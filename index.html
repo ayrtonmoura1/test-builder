@@ -88,6 +88,7 @@
         <div id="paper" class="paper">
             
             <header class="exam-header">
+                <div id="headerRtfContainer"></div>
                 <div class="header-main">
                     <div class="header-logo">
                         <label for="logoUpload" class="image-upload-wrapper">
@@ -102,31 +103,31 @@
                     
                     <div class="header-info">
                         <div class="header-row title-row">
-                            <span class="label">Avaliação:</span>
+                            <span class="label">AVALIAÇÃO:</span>
                             <div class="editable-field" contenteditable="true" data-field="title" id="globalTestTitle" onblur="app.saveState()">Simulado Geral</div>
                         </div>
                         <div class="header-row">
-                            <span class="label">Escola:</span>
+                            <span class="label">ESCOLA:</span>
                             <div class="editable-field" contenteditable="true" data-field="school" onblur="app.saveState()">Nome da Instituição</div>
                         </div>
                         <div class="header-grid">
                             <div class="header-row">
-                                <span class="label">Turma:</span>
+                                <span class="label">TURMA:</span>
                                 <div class="editable-field" contenteditable="true" data-field="class" onblur="app.saveState()">3º Ano Médio</div>
                             </div>
                             <div class="header-row">
-                                <span class="label">Data:</span>
+                                <span class="label">DATA:</span>
                                 <div class="editable-field" contenteditable="true" data-field="date" onblur="app.saveState()">__ / __ / 20__</div>
                             </div>
                         </div>
                         <div class="header-row signature-row">
-                            <span class="label">Aluno(a):</span>
+                            <span class="label">ESTUDANTE:</span>
                             <div class="signature-line"></div>
                         </div>
                     </div>
                 </div>
                 <div class="exam-instructions" contenteditable="true" data-field="instructions" onblur="app.saveState()">
-                    <strong>Instruções:</strong> Preencha o cabeçalho. Marque apenas uma alternativa por questão. (Cole imagens e tabelas livremente).
+                    <strong>INSTRUÇÕES:</strong> Preencha o cabeçalho. Marque apenas uma alternativa por questão. (Cole imagens e tabelas livremente).
                 </div>
             </header>
 
@@ -198,7 +199,6 @@
     <script src="bncc_data.js"></script> 
 </body>
 </html>
-
 
 
 
