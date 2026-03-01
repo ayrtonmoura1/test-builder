@@ -53,6 +53,13 @@ const app = {
         this.bindPasteEvent();
         this.buildSymbolPicker(); 
         this.bindEmojiPicker(); 
+
+        // NOVO: Injeta a barra de ferramentas no cabeçalho sem o botão da BNCC (false)
+        const headerRtfContainer = document.getElementById('headerRtfContainer');
+        if (headerRtfContainer) {
+            headerRtfContainer.innerHTML = this.getRtfToolbar(false);
+        }
+
         if (this.state.blocks.length === 0) {
             this.addQuestion();
         } else {
@@ -61,7 +68,18 @@ const app = {
     },
 
     handleGlobalClick(event) {
-        if(!event.target.closest('.block-item') && !event.target.closest('.toolbar') && !event.target.closest('.modal-overlay') && !event.target.closest('.btn-open-symbols') && !event.target.closest('.btn-bncc')) {
+        // Controle de foco do cabeçalho
+        const header = document.querySelector('.exam-header');
+        if (header) {
+            if (event.target.closest('.exam-header') || event.target.closest('.modal-overlay') || event.target.closest('.rtf-toolbar')) {
+                header.classList.add('active-header');
+            } else {
+                header.classList.remove('active-header');
+            }
+        }
+
+        // Controle de foco dos blocos
+        if(!event.target.closest('.block-item') && !event.target.closest('.toolbar') && !event.target.closest('.modal-overlay') && !event.target.closest('.rtf-toolbar')) {
             this.setActiveBlock(null);
         }
     },
@@ -1048,7 +1066,15 @@ const app = {
         }
     },
 
-    getRtfToolbar() {
+    getRtfToolbar(showBncc = true) {
+        let bnccButton = '';
+        if (showBncc) {
+            bnccButton = `
+                <div class="rtf-divider"></div>
+                <button type="button" title="Consultar e Inserir BNCC" class="btn-bncc" onmousedown="event.preventDefault(); app.openBnccModal()"><i class="ph ph-list-numbers"></i> BNCC</button>
+            `;
+        }
+
         return `
             <div class="rtf-toolbar no-print">
                 <button type="button" title="Negrito" onmousedown="event.preventDefault(); app.formatText('bold')"><b>B</b></button>
@@ -1073,8 +1099,7 @@ const app = {
                 <button type="button" title="Inserir Equação" class="btn-math" onmousedown="event.preventDefault(); app.insertMath()"><b>&sum; Eq</b></button>
                 <div class="rtf-divider"></div>
                 <button type="button" title="Símbolos e Emojis" class="btn-open-symbols" onmousedown="event.preventDefault(); app.openSymbolModal()"><i class="ph ph-smiley"></i> &Omega;</button>
-                <div class="rtf-divider"></div>
-                <button type="button" title="Consultar e Inserir BNCC" class="btn-bncc" onmousedown="event.preventDefault(); app.openBnccModal()"><i class="ph ph-list-numbers"></i> BNCC</button>
+                ${bnccButton}
             </div>
         `;
     },
@@ -1097,7 +1122,7 @@ const app = {
                     <button class="btn-danger" onclick="app.deleteBlock('${block.id}')"><i class="ph ph-trash"></i></button>
                 </div>
             </div>
-            ${this.getRtfToolbar()}
+            ${this.getRtfToolbar(false)}
             <div class="text-content">
                 <div class="question-text" contenteditable="true" data-placeholder="Cole imagens, textos base, poemas..." onblur="app.saveState()">${block.text}</div>
             </div>
@@ -1191,7 +1216,7 @@ const app = {
                     <button class="btn-danger" onclick="app.deleteBlock('${block.id}')"><i class="ph ph-trash"></i></button>
                 </div>
             </div>
-            ${this.getRtfToolbar()}
+            ${this.getRtfToolbar(true)}
             
             <div class="clearfix">
                 <div class="q-label-float" contenteditable="false">
@@ -1300,5 +1325,4 @@ const app = {
 };
 
 document.addEventListener('DOMContentLoaded', () => app.init());
-
 
