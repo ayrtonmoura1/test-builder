@@ -86,9 +86,50 @@ const app = {
 
     bindPasteEvent() {
         document.addEventListener('paste', (e) => {
-            if (!e.target.closest('.question-text, .alt-text, .exam-instructions')) return;
+            const target = e.target.closest('.question-text, .alt-text, .exam-instructions');
+            if (!target) return;
 
-            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            const clipboardData = e.clipboardData || window.clipboardData;
+            
+            // --- NOVO: LÓGICA DE DISTRIBUIÇÃO AUTOMÁTICA DE ALTERNATIVAS ---
+            if (target.classList.contains('alt-text')) {
+                const pastedText = clipboardData.getData('text/plain');
+                
+                // Se o texto colado contiver quebras de linha (múltiplas linhas copiadas)
+                if (pastedText && pastedText.includes('\n')) {
+                    e.preventDefault(); // Impede o navegador de colar tudo dentro de uma única caixa
+                    
+                    // Divide o texto por quebras de linha e remove as linhas que estiverem em branco
+                    const lines = pastedText.split(/\r?\n/).filter(line => line.trim() !== '');
+                    
+                    // Expressão Regular para identificar e limpar coisas como "a)", "A -", "1.", "b)", etc. do início.
+                    const regexPrefix = /^([a-zA-Z0-9][\.\-\)]\s*)/;
+
+                    // Pega o bloco de questão atual e encontra todas as alternativas dele
+                    const block = target.closest('.question-block');
+                    const allAlts = Array.from(block.querySelectorAll('.alt-text'));
+                    
+                    // Descobre em qual alternativa (índice) o utilizador clicou para colar
+                    const startIndex = allAlts.indexOf(target);
+                    
+                    if (startIndex > -1) {
+                        // Distribui as linhas coladas a partir da caixa atual para as caixas seguintes
+                        for (let i = 0; i < lines.length; i++) {
+                            const currentAlt = allAlts[startIndex + i];
+                            // Só preenche se a alternativa existir no DOM (limita à quantidade do bloco)
+                            if (currentAlt) { 
+                                // Limpa o prefixo indesejado e insere na caixa
+                                currentAlt.innerText = lines[i].replace(regexPrefix, '').trim();
+                            }
+                        }
+                        this.saveState(); // Salva a prova
+                        return; // Sai da função para não executar o resto
+                    }
+                }
+            }
+
+            // --- LÓGICA ORIGINAL: COMPRESSÃO E COLAGEM DE IMAGENS ---
+            const items = clipboardData.items;
             for (let index in items) {
                 const item = items[index];
                 if (item.kind === 'file' && item.type.startsWith('image/')) {
@@ -628,6 +669,7 @@ const app = {
         const headerData = {
             title: document.querySelector('[data-field="title"]').innerText,
             school: document.querySelector('[data-field="school"]').innerText,
+            teacher: document.querySelector('[data-field="teacher"]').innerText, // NOVO
             class: document.querySelector('[data-field="class"]').innerText,
             date: document.querySelector('[data-field="date"]').innerText,
             instructions: document.querySelector('[data-field="instructions"]').innerHTML,
@@ -714,6 +756,10 @@ const app = {
                 document.querySelector('[data-field="school"]').innerText = data.header.school || '';
                 document.querySelector('[data-field="class"]').innerText = data.header.class || '';
                 document.querySelector('[data-field="date"]').innerText = data.header.date || '';
+                if(document.querySelector('[data-field="teacher"]')) {
+                    document.querySelector('[data-field="teacher"]').innerText = data.header.teacher || 'Nome do Professor';
+                }
+                
                 if(data.header.instructions) document.querySelector('[data-field="instructions"]').innerHTML = data.header.instructions;
                 if(data.header.logo && data.header.logo.length > 50) {
                     const img = document.getElementById('logoPreview');
