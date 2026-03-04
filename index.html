@@ -81,7 +81,6 @@
         <div class="tools-section bottom-tools">
             <button class="btn-danger btn-full" onclick="app.clearData()"><i class="ph ph-trash"></i> Reiniciar Tudo</button>
         </div>
-        <h5>Desenvolvido por <strong>Ayrton Moura Souza Lima</strong></h5>
     </aside>
 
     <main class="paper-container" onclick="app.handleGlobalClick(event)">
@@ -89,43 +88,65 @@
             
             <header class="exam-header">
                 <div id="headerRtfContainer"></div>
-                <div class="header-main">
-                    <div class="header-logo">
-                        <label for="logoUpload" class="image-upload-wrapper">
-                            <div class="img-placeholder bg-logo" id="logoPlaceholder">
-                                <span class="placeholder-text"><i class="ph ph-buildings"></i><br>Logo</span>
-                            </div>
-                            <img id="logoPreview" src="" alt="Logo" style="display: none;">
-                            <div class="image-overlay no-print"><i class="ph ph-camera"></i></div>
-                        </label>
-                        <input type="file" id="logoUpload" accept="image/*" class="no-print" style="display: none;" onchange="app.handleLogoUpload(event)">
-                    </div>
+                
+                <div class="header-main-box">
                     
-                    <div class="header-info">
-                        <div class="header-row title-row">
-                            <span class="label">AVALIAÇÃO:</span>
-                            <div class="editable-field" contenteditable="true" data-field="title" id="globalTestTitle" onblur="app.saveState()">Simulado Geral</div>
+                    <div class="header-top-section">
+                        
+                        <div class="header-logo">
+                            <label for="logoUpload" class="image-upload-wrapper">
+                                <div class="img-placeholder bg-logo" id="logoPlaceholder">
+                                    <span class="placeholder-text"><i class="ph ph-buildings"></i><br>Logo</span>
+                                </div>
+                                <img id="logoPreview" src="" alt="Logo" style="display: none;">
+                                <div class="image-overlay no-print"><i class="ph ph-camera"></i></div>
+                            </label>
+                            <input type="file" id="logoUpload" accept="image/*" class="no-print" style="display: none;" onchange="app.handleLogoUpload(event)">
                         </div>
-                        <div class="header-row">
-                            <span class="label">ESCOLA:</span>
-                            <div class="editable-field" contenteditable="true" data-field="school" onblur="app.saveState()">Nome da Instituição</div>
-                        </div>
-                        <div class="header-grid">
-                            <div class="header-row">
-                                <span class="label">TURMA:</span>
-                                <div class="editable-field" contenteditable="true" data-field="class" onblur="app.saveState()">3º Ano Médio</div>
+                        
+                        <div class="header-texts">
+                            <div class="h-row">
+                                <span class="label">AVALIAÇÃO:</span>
+                                <div class="editable-field title-field" contenteditable="true" data-field="title" onblur="app.saveState()">Digite aqui o título da avaliação</div>
                             </div>
-                            <div class="header-row">
-                                <span class="label">DATA:</span>
-                                <div class="editable-field" contenteditable="true" data-field="date" onblur="app.saveState()">__ / __ / 20__</div>
+                            <div class="h-row">
+                                <span class="label">ESCOLA:</span>
+                                <div class="editable-field" contenteditable="true" data-field="school" onblur="app.saveState()">Digite aqui o nome da Instituição</div>
+                            </div>
+                            <div class="h-row">
+                                <span class="label">PROFESSOR(A):</span>
+                                <div class="editable-field" contenteditable="true" data-field="teacher" onblur="app.saveState()">Digite aqui o nome do professor</div>
+                            </div>
+                            <div class="h-row-group">
+                                <div class="h-col" style="flex: 1.5;">
+                                    <span class="label">TURMA:</span>
+                                    <div class="editable-field" contenteditable="true" data-field="class" onblur="app.saveState()">3º Ano A</div>
+                                </div>
+                                <div class="h-col" style="flex: 1;">
+                                    <span class="label">DATA:</span>
+                                    <div class="editable-field" contenteditable="true" data-field="date" onblur="app.saveState()">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="header-row signature-row">
+                        
+                        <div class="header-grade">
+                            <div class="grade-label">NOTA</div>
+                            <div class="grade-value"></div>
+                        </div>
+
+                    </div> <div class="header-student-section">
+                        <div class="h-col" style="flex: 5;">
                             <span class="label">ESTUDANTE:</span>
                             <div class="signature-line"></div>
                         </div>
+                        <div class="h-col" style="flex: 0.9;">
+                            <span class="label">Nº:</span>
+                            <div class="signature-line"></div>
+                        </div>
                     </div>
+                    
                 </div>
+
                 <div class="exam-instructions" contenteditable="true" data-field="instructions" onblur="app.saveState()">
                     <strong>INSTRUÇÕES:</strong> Preencha o cabeçalho. Marque apenas uma alternativa por questão. (Cole imagens e tabelas livremente).
                 </div>
@@ -133,6 +154,9 @@
 
             <div id="blocksContainer" class="blocks-container cols-1"></div>
         </div>
+        <footer class="app-footer no-print">
+        <p>&copy; 2026 - Ayrton Moura Souza Lima. Todos os direitos reservados.</p>
+    </footer>
     </main>
 
     <div id="symbolModalOverlay" class="modal-overlay no-print" style="display: none;" onclick="if(event.target===this) app.closeSymbolModal()">
@@ -196,7 +220,8 @@
     <script src="app.js"></script>
     <script src="print.js"></script> 
     <script src="apoio.js"></script> 
-    <script src="bncc_data.js"></script> 
+    <script src="bncc_data.js"></script>
+    <script src="legenda.js"></script> 
 </body>
 </html>
 
