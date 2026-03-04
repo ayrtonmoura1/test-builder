@@ -59,31 +59,133 @@ button i { font-size: 16px; }
 /* Alternância Global de Colunas */
 .blocks-container { display: block; }
 .blocks-container.cols-1 { column-count: 1; }
-.blocks-container.cols-2 { 
-    column-count: 2; 
-    column-gap: 3%; 
+.cols-2 {
+    column-count: 2;
+    column-gap: 40px; /* Aumentamos um pouquinho o gap para o texto não encostar na linha */
+    column-rule: 1px solid #cbd5e1; /* Cria a linha sutil na cor da borda */
 }
 
 /* --- Header --- */
 .exam-header { display: flex; flex-direction: column; border: none; margin-bottom: 15px; break-inside: avoid; width: 100%; }
 .header-main { display: flex; padding: 10px; border-bottom: none; }
-.header-logo { width: 120px; display: flex; justify-content: center; align-items: center; border-right: none; padding-right: 10px; margin-right: 10px; }
+.header-logo { width: 120px; display: flex; justify-content: center; align-items: center; border-right: none; padding-right: 1px; margin-right: 5px; }
 .exam-instructions { padding: 6px 10px 15px 10px; font-size: var(--dynamic-font-size); min-height: 30px; outline: none; line-height: 1.4; border-bottom: 2px solid var(--text-main); margin-bottom: 10px; }
 .img-placeholder { width: 100%; display: flex; justify-content: center; align-items: center; background: #f1f5f9; border: 1px dashed #94a3b8; border-radius: 4px; overflow: hidden; }
-.bg-logo { height: 70px; }
+.bg-logo { height: 150px; }
 .placeholder-text { color: #94a3b8; text-align: center; font-size: 11px; }
 .image-upload-wrapper { position: relative; display: block; cursor: pointer; width: 100%; text-align: center; }
 .image-upload-wrapper img { max-width: 100%; max-height: 200px; object-fit: contain; position: relative; z-index: 2; margin: 0 auto; display: block; }
 .image-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 12px; font-weight: bold; opacity: 0; transition: opacity 0.2s; z-index: 3; }
 .image-upload-wrapper:hover .image-overlay { opacity: 1; }
-.header-info { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-.header-row { display: flex; align-items: baseline; gap: 5px; font-size: var(--dynamic-font-size); }
-.header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.label { font-weight: bold; }
-.editable-field { flex: 1; border-bottom: 1px dashed var(--border-color); min-height: 16px; outline: none; padding: 0 4px; }
-.title-row .editable-field { font-size: var(--dynamic-font-size); font-weight: bold; text-transform: uppercase; }
-.signature-row { margin-top: 10px; }
-.signature-line { flex: 1; border-bottom: 1px solid var(--text-main); margin-left: 10px; }
+
+/* --- Header --- */
+.exam-header { display: flex; flex-direction: column; margin-bottom: 15px; width: 100%; break-inside: avoid; }
+
+.header-main-box { 
+    display: flex; 
+    flex-direction: column;
+    width: 100%;
+    gap: 12px; /* Dá respiro exato entre o topo e a linha do estudante */
+}
+
+/* Estrutura superior: Logo, Textos e Nota */
+.header-top-section {
+    display: flex;
+    gap: 12px; /* Aproximação milimétrica da logo com as labels */
+    align-items: stretch; /* Força a Nota e a Logo a acompanharem a altura das 4 linhas */
+    width: 100%;
+}
+
+/* 1. Coluna da Logo (Ainda mais enxuta) */
+.header-logo { 
+    width: 100px; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    flex-shrink: 0;
+}
+.img-placeholder { width: 100%; height: 90px; display: flex; justify-content: center; align-items: center; background: #f1f5f9; border: 1px dashed #cbd5e1; border-radius: 4px; overflow: hidden; }
+.bg-logo { height: 110px; }
+.placeholder-text { color: #94a3b8; text-align: center; font-size: 11px; }
+.image-upload-wrapper { position: relative; display: block; cursor: pointer; width: 100%; text-align: center; }
+.image-upload-wrapper img { max-width: 100%; max-height: 90px; object-fit: contain; position: relative; z-index: 2; margin: 0 auto; display: block; }
+.image-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 12px; font-weight: bold; opacity: 0; transition: opacity 0.2s; z-index: 3; }
+.image-upload-wrapper:hover .image-overlay { opacity: 1; }
+
+/* 2. Coluna dos Textos */
+.header-texts {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* AQUI ESTÁ O CONTROLE! Aumente para 18px, 20px ou diminua para 10px */
+    min-width: 0;
+}
+
+/* 3. Caixa de Nota (Agora com o efeito visual da sua imagem) */
+.header-grade { 
+    width: 80px; /* Caixinha compacta e elegante */
+    background: #f8fafc; 
+    border: 1px solid var(--text-main); /* Borda sólida como pedida */
+    border-radius: 6px; 
+    display: flex; 
+    flex-direction: column; 
+    flex-shrink: 0;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.06); /* Sombra super leve */
+}
+.grade-label { 
+    text-align: center; 
+    font-size: 10px; 
+    font-weight: bold; 
+    padding: 4px; 
+    color: var(--text-main); 
+    border-bottom: 1px dashed var(--border-color);
+    letter-spacing: 1px;
+}
+
+/* 4. Linha do Estudante (Ocupa 100% embaixo) */
+.header-student-section {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+    align-items: flex-end;
+}
+
+/* ALINHAMENTOS NA BASE (Impede as linhas de flutuarem) */
+.h-row { display: flex; align-items: baseline; gap: 4px; width: 100%; }
+.h-row-group { display: flex; align-items: baseline; gap: 15px; width: 100%; }
+.h-col { display: flex; align-items: baseline; gap: 4px; min-width: 0; }
+
+.label { 
+    font-weight: bold; 
+    font-size: var(--dynamic-font-size); 
+    color: var(--text-main); 
+    white-space: nowrap; 
+    margin: 0; /* Remove margens residuais */
+}
+/* Campos tracejados */
+.editable-field { 
+    flex: 1; 
+    border-bottom: 1px solid var(--text-main); 
+    outline: none; 
+    padding: 0 4px; /* Removemos o padding vertical que jogava a letra pra cima */
+    font-size: var(--dynamic-font-size);
+    white-space: nowrap; 
+    overflow: hidden; 
+}
+.title-field { font-weight: bold; text-transform: uppercase; font-size: calc(var(--dynamic-font-size) + 1px); }
+.signature-line { 
+    flex: 1; 
+    border-bottom: 1px solid var(--text-main); 
+    margin-left: 2px; 
+}
+/* Traço do Estudante e Nº */
+.signature-line::after {
+    content: '\200B'; /* Espaço com zero largura (Mágica do CSS) */
+    font-size: var(--dynamic-font-size);
+}
+
+/* Instruções Separadas */
+.exam-instructions { padding: 4px 0px 8px 0px; font-size: calc(var(--dynamic-font-size)); min-height: 20px; outline: none; line-height: 1.4; margin-top: 10px; margin-bottom: 10px; width: 100%; color: #000000; border-bottom: 2px solid var(--text-main); }
 
 /* --- BLOCOS E DRAG --- */
 .block-item { 
@@ -105,9 +207,10 @@ button i { font-size: 16px; }
 .block-unlocked { width: 100%; }
 .block-locked { 
     column-span: all; 
-    width: 100%; 
-    margin-top: 25px !important;    
-    margin-bottom: 25px !important; 
+    margin-top: 0; 
+    margin-bottom: 15px; /* Espaço para a próxima questão */
+    padding-bottom: 15px; /* Espaço entre o texto e a linha divisória */
+    border-bottom: 1px solid #cbd5e1; /* A linha divisória elegante */
 }
 
 .block-item:hover { border-color: var(--border-color); }
@@ -332,7 +435,19 @@ emoji-picker { width: 100%; height: 270px; --background: #f8fafc; border: none; 
         break-inside: auto; 
         page-break-inside: auto; 
     }
-    .block-locked { column-span: all; display: block; margin-top: 25px !important; margin-bottom: 25px !important; }
+
+    .block-locked { 
+        column-span: all; 
+        display: block; 
+        margin-top: 0 !important; 
+        margin-bottom: 15px !important; 
+        padding-bottom: 15px !important;
+        border-bottom: 1px solid #000 !important; /* Linha preta e nítida no PDF */
+    }
+.block-locked:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
 
     .alternatives-container { display: block !important; }
 
@@ -349,7 +464,7 @@ emoji-picker { width: 100%; height: 270px; --background: #f8fafc; border: none; 
     .spacer-content { border: none !important; background: transparent !important; }
 
     .divider-content { margin: 15px 0 10px 0; break-after: avoid; }
-    .editable-field, .question-text, .alt-text, .exam-instructions { border-bottom: none !important; background: transparent !important; break-inside: auto; }
+    .question-text, .alt-text { border-bottom: none !important; background: transparent !important; break-inside: auto; }
     .question-text { text-align: justify; }
     .resizable-image { border: none !important; padding: 0 !important; resize: none !important; margin: 5px 0; }
     math-field { border: none !important; padding: 0 !important; margin: 0 !important; outline: none !important; background: transparent !important;}
@@ -362,11 +477,66 @@ emoji-picker { width: 100%; height: 270px; --background: #f8fafc; border: none; 
     .spacer-block, .divider-block {
         border-bottom: none !important;
     }
-
+    
+    /* --- FORÇAR IMPRESSÃO DO CABEÇALHO --- */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .editable-field, .signature-line {
+        border-bottom: 1px solid #000 !important;
+        min-height: 18px !important;
+    }
+    
+    .header-grade {
+        border: 2px solid #000 !important;
+        background-color: #f8fafc !important;
+    }
+    
+    .grade-label {
+        border-bottom: 1px dashed #000 !important;
+        color: #000 !important;
+    }
+    
+    .exam-instructions {
+        border-bottom: 2px solid #000 !important;
+    }
+    
+    .label, .editable-field, .exam-instructions {
+        color: #000 !important;
+    }
+.cols-2 {
+        column-rule: 1px solid #000 !important; /* Linha preta e forte na impressão */
+    }
 }
 
 /* --- IMPRESSÃO DO PROFESSOR (COM RESPOSTAS E HABILIDADES) --- */
 @media print {
+    /* --- MATA A FOLHA EM BRANCO EXTRA --- */
+    html, body {
+        height: auto !important;
+        min-height: auto !important;
+    }
+    
+    .paper, .paper-container {
+        height: auto !important;
+        min-height: auto !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+    }
+
+    #blocksContainer {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
+    .block-item:last-child {
+        margin-bottom: 0 !important;
+        break-after: avoid !important;
+        page-break-after: avoid !important;
+    }
+
     /* Exibe os campos de Habilidade e Gabarito Esperado (Dissertativas) */
     body.print-with-answers .teacher-fields {
         display: flex !important;
@@ -397,4 +567,16 @@ emoji-picker { width: 100%; height: 270px; --background: #f8fafc; border: none; 
    .gabarito-input { width: 100%; background: transparent; border: none; outline: none; font-size: 12px; color: #14532d; min-height: 30px; resize: none; overflow: hidden; border-bottom: 1px dashed #86efac; font-family: inherit; }
 
 .habilidade-input { width: 100%; background: transparent; border: none; outline: none; font-size: 12px; color: #854d0e; min-height: 45px; resize: none; overflow: hidden; border-bottom: 1px dashed #fde047; font-family: inherit; }
+
+}
+
+/* --- Rodapé do App --- */
+.app-footer {
+    text-align: center;
+    padding: 20px 10px;
+    margin-top: 40px;
+    color: #64748b; /* Cinza bem discreto */
+    font-size: 12px;
+    border-top: 1px solid #e2e8f0; /* Linha sutil separando do app */
+    width: 100%;
 }
