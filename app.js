@@ -1265,11 +1265,11 @@ const app = {
             ${this.getRtfToolbar(true)}
             
             <div class="clearfix">
-                <div class="q-label-float" contenteditable="false">
-                    QUESTÃO <span class="auto-q-number">${block.autoNumber}</span>
-                </div>
-                <div class="question-text" contenteditable="true" data-placeholder="Cole imagens, tabelas ou digite o enunciado..." onblur="app.saveState()">${block.text}</div>
-            </div>
+<div class="q-label-float" contenteditable="false">
+QUESTÃO <span class="auto-q-number">${String(block.autoNumber).padStart(2, '0')}</span>
+</div>
+<div class="question-text" contenteditable="true" data-placeholder="Cole imagens, tabelas ou digite o enunciado..." onblur="app.saveState()">${block.text}</div>
+ </div>
             
             ${contentHTML}
 
@@ -1351,7 +1351,7 @@ const app = {
                 }
 
                 data.push({
-                    "Questão": questionCounter++,
+                    "Questão": String(questionCounter++).padStart(2, '0'),
                     "Tipo": block.qType === 'multiple' ? "Múltipla" : (block.qType === 'vf' ? "V/F" : "Aberta"),
                     "Enunciado (Resumo)": plainText.substring(0, 100) + '...',
                     "Letra Correta": gabaritoLetra,
