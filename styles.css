@@ -225,7 +225,12 @@ button i { font-size: 16px; }
 
 .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .question-header-left { display: flex; align-items: center; width: 100%; }
-.block-controls { display: flex; gap: 5px; }
+.block-controls { 
+    display: flex; 
+    gap: 5px; 
+    position: relative; /* Garante que a lixeira seja o ponto zero */
+    transform: translateZ(0); /* A MÁGICA: Força o navegador a calcular a posição correta na 2ª coluna! */
+}
 .block-controls button { padding: 4px; font-size: 14px; background: transparent; border-color: transparent; color: #94a3b8; transition: all 0.2s; }
 .block-controls button:hover { background: #e2e8f0; color: var(--text-main); }
 .block-controls button.locked-btn { color: #f59e0b; } 
@@ -410,6 +415,86 @@ emoji-picker { width: 100%; height: 270px; --background: #f8fafc; border: none; 
 .spacer-block, .divider-block {
     border-bottom: none !important;
 }
+
+/* --- Popover Confirmação (Apenas o Botão Flutuante) --- */
+
+/* 1. A caixa de fundo agora é TOTALMENTE INVISÍVEL */
+/* 1. A caixa de fundo agora é TOTALMENTE INVISÍVEL */
+.delete-confirm-popover {
+    position: absolute !important;
+    
+    /* A MÁGICA FINAL: Trocamos o BOTTOM pelo TOP */
+    /* Isso impede 100% o bug das colunas do navegador */
+    bottom: auto !important; 
+    top: -25px !important; 
+    
+    right: -32px !important; 
+    left: auto !important; 
+    background: transparent !important; 
+    padding: 0 !important; 
+    display: flex !important;
+    align-items: center !important; 
+    justify-content: center !important;
+    z-index: 999999 !important; 
+    box-shadow: none !important; 
+    
+    height: max-content !important; 
+    min-height: 0 !important; 
+    width: max-content !important; 
+    max-width: none !important;
+    margin: 0 !important;
+}
+
+/* 2. O Botão (Agora ele é a estrela, com cor e sombra próprias) */
+.delete-confirm-popover button {
+    position: relative !important; /* Necessário para grudar a setinha nele */
+    border: none !important; 
+    border-radius: 4px !important; 
+    padding: 6px 10px !important; /* Um pouquinho mais gordinho para ficar elegante */
+    font-size: 11px !important; 
+    line-height: 1 !important; 
+    text-transform: uppercase !important;
+    cursor: pointer !important; 
+    font-weight: bold !important; 
+    
+    /* Cores do botão */
+    color: #ffffff !important; 
+    background-color: #ef4444 !important; 
+    
+    /* A SOMBRA AGORA FICA DIRETO NO BOTÃO: */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25) !important; 
+    
+    /* Blindagem de tamanho */
+    width: auto !important; 
+    min-width: 0 !important;
+    flex: 0 0 auto !important;
+    height: auto !important; 
+    min-height: 0 !important; 
+    margin: 0 !important; 
+    transition: background-color 0.2s ease !important;
+}
+
+/* 3. A Setinha (Agora é VERMELHA e grudada no botão) */
+.delete-confirm-popover button::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 100% !important;
+    right: 10px !important; 
+    border-width: 5px !important; 
+    border-style: solid !important;
+    /* Cor vermelha combinando com o botão: */
+    border-color: #ef4444 transparent transparent transparent !important; 
+    transition: border-color 0.2s ease !important;
+}
+
+/* 4. Efeito ao passar o mouse (Escurece o botão e a setinha juntos) */
+.delete-confirm-popover button:hover { 
+    background-color: #dc2626 !important; 
+}
+.delete-confirm-popover button:hover::after {
+    border-color: #dc2626 transparent transparent transparent !important;
+}
+
 
 /* --- IMPRESSÃO 100% LIMPA --- */
 @media print {
