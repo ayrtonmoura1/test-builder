@@ -1,7 +1,7 @@
 const app = {
     state: {
         fontSize: '12px',
-        columns: 1, 
+        columns: 1,
         blocks: [],
         activeBlockId: null,
         savedSelection: null
@@ -51,8 +51,8 @@ const app = {
         this.applyGlobalSettings();
         this.bindHeaderEvents();
         this.bindPasteEvent();
-        this.buildSymbolPicker(); 
-        this.bindEmojiPicker(); 
+        this.buildSymbolPicker();
+        this.bindEmojiPicker();
 
         // NOVO: Injeta a barra de ferramentas no cabeçalho sem o botão da BNCC (false)
         const headerRtfContainer = document.getElementById('headerRtfContainer');
@@ -79,7 +79,7 @@ const app = {
         }
 
         // Controle de foco dos blocos
-        if(!event.target.closest('.block-item') && !event.target.closest('.toolbar') && !event.target.closest('.modal-overlay') && !event.target.closest('.rtf-toolbar')) {
+        if (!event.target.closest('.block-item') && !event.target.closest('.toolbar') && !event.target.closest('.modal-overlay') && !event.target.closest('.rtf-toolbar')) {
             this.setActiveBlock(null);
         }
     },
@@ -90,34 +90,34 @@ const app = {
             if (!target) return;
 
             const clipboardData = e.clipboardData || window.clipboardData;
-            
+
             // --- NOVO: LÓGICA DE DISTRIBUIÇÃO AUTOMÁTICA DE ALTERNATIVAS ---
             if (target.classList.contains('alt-text')) {
                 const pastedText = clipboardData.getData('text/plain');
-                
+
                 // Se o texto colado contiver quebras de linha (múltiplas linhas copiadas)
                 if (pastedText && pastedText.includes('\n')) {
                     e.preventDefault(); // Impede o navegador de colar tudo dentro de uma única caixa
-                    
+
                     // Divide o texto por quebras de linha e remove as linhas que estiverem em branco
                     const lines = pastedText.split(/\r?\n/).filter(line => line.trim() !== '');
-                    
+
                     // Expressão Regular para identificar e limpar coisas como "a)", "A -", "1.", "b)", etc. do início.
                     const regexPrefix = /^([a-zA-Z0-9][\.\-\)]\s*)/;
 
                     // Pega o bloco de questão atual e encontra todas as alternativas dele
                     const block = target.closest('.question-block');
                     const allAlts = Array.from(block.querySelectorAll('.alt-text'));
-                    
+
                     // Descobre em qual alternativa (índice) o utilizador clicou para colar
                     const startIndex = allAlts.indexOf(target);
-                    
+
                     if (startIndex > -1) {
                         // Distribui as linhas coladas a partir da caixa atual para as caixas seguintes
                         for (let i = 0; i < lines.length; i++) {
                             const currentAlt = allAlts[startIndex + i];
                             // Só preenche se a alternativa existir no DOM (limita à quantidade do bloco)
-                            if (currentAlt) { 
+                            if (currentAlt) {
                                 // Limpa o prefixo indesejado e insere na caixa
                                 currentAlt.innerText = lines[i].replace(regexPrefix, '').trim();
                             }
@@ -170,16 +170,16 @@ const app = {
 
     buildSymbolPicker() {
         const ranges = {
-            'math': [[0x2200, 0x22FF], [0x00B1, 0x00B1], [0x00D7, 0x00D7], [0x00F7, 0x00F7]], 
-            'greek': [[0x0391, 0x03A9], [0x03B1, 0x03C9]], 
-            'arrows': [[0x2190, 0x21FF]] 
+            'math': [[0x2200, 0x22FF], [0x00B1, 0x00B1], [0x00D7, 0x00D7], [0x00F7, 0x00F7]],
+            'greek': [[0x0391, 0x03A9], [0x03B1, 0x03C9]],
+            'arrows': [[0x2190, 0x21FF]]
         };
 
         for (const [tab, arr] of Object.entries(ranges)) {
             const container = document.getElementById(`tab-${tab}`);
-            if(!container) continue;
-            container.innerHTML = ''; 
-            
+            if (!container) continue;
+            container.innerHTML = '';
+
             arr.forEach(range => {
                 for (let i = range[0]; i <= range[1]; i++) {
                     const char = String.fromCharCode(i);
@@ -202,7 +202,7 @@ const app = {
 
     openSymbolModal() {
         const sel = window.getSelection();
-        if(sel.rangeCount > 0) {
+        if (sel.rangeCount > 0) {
             this.state.savedSelection = sel.getRangeAt(0).cloneRange();
         }
         document.getElementById('symbolModalOverlay').style.display = 'flex';
@@ -222,7 +222,7 @@ const app = {
         this.saveState();
         document.getElementById('bnccModalOverlay').style.display = 'flex';
         // Limpa a busca anterior
-        document.getElementById('bnccSearchInput').value = ''; 
+        document.getElementById('bnccSearchInput').value = '';
     },
 
     closeBnccModal() {
@@ -233,15 +233,15 @@ const app = {
         const etapa = document.getElementById('bnccEtapa').value;
         const discSelect = document.getElementById('bnccDisciplina');
         discSelect.innerHTML = '<option value="">2. Selecione a Disciplina/Campo...</option>';
-        
-        if(!etapa) {
+
+        if (!etapa) {
             discSelect.disabled = true;
             return;
         }
-        
+
         discSelect.disabled = false;
         const disciplinas = this.bnccConfig[etapa].disciplinas;
-        for(const key in disciplinas) {
+        for (const key in disciplinas) {
             discSelect.innerHTML += `<option value="${key}">${disciplinas[key]}</option>`;
         }
     },
@@ -250,23 +250,23 @@ const app = {
         const etapa = document.getElementById('bnccEtapa').value;
         const disciplina = document.getElementById('bnccDisciplina').value;
         const resultsContainer = document.getElementById('bnccResults');
-        
-        if(!etapa || !disciplina) {
+
+        if (!etapa || !disciplina) {
             alert("Selecione a etapa e a disciplina.");
             return;
         }
-        
+
         resultsContainer.innerHTML = '<p style="text-align:center; padding: 20px;"><strong>Carregando base de dados local...</strong></p>';
-        
+
         try {
             // Puxa os dados diretamente da variável global definida no bncc_data.js
             const data = bnccDadosLocais[etapa];
-            
+
             // Verifica se o usuário realmente colou o JSON lá dentro
             if (!data || Object.keys(data).length === 0) {
                 throw new Error("Os dados JSON não foram encontrados no arquivo bncc_data.js.");
             }
-            
+
             let list = [];
 
             // Função auxiliar para procurar a chave correta
@@ -283,7 +283,7 @@ const app = {
             if (etapa === 'infantil') {
                 const eiData = getNestedData(data, 'educacao_infantil');
                 const campos = eiData.campos_experiencia || eiData.campos_de_experiencias || [];
-                
+
                 const campoEncontrado = campos.find(c => c.nome_campo.toLowerCase().includes(disciplina.toLowerCase()) || disciplina.toLowerCase().includes(c.nome_campo.toLowerCase()));
                 if (campoEncontrado) {
                     const faixas = campoEncontrado.faixas_etarias || campoEncontrado.objetivos_aprendizagem || [];
@@ -299,17 +299,17 @@ const app = {
                 const discData = getNestedData(data, disciplina);
                 if (discData && discData.ano) {
                     discData.ano.forEach(a => {
-                        if(a.unidades_tematicas) {
+                        if (a.unidades_tematicas) {
                             a.unidades_tematicas.forEach(u => {
-                                if(u.objeto_conhecimento) {
+                                if (u.objeto_conhecimento) {
                                     u.objeto_conhecimento.forEach(o => {
-                                        if(o.habilidades) {
+                                        if (o.habilidades) {
                                             o.habilidades.forEach(h => {
                                                 let match = h.nome_habilidade.match(/^\((.*?)\)\s*(.*)/);
-                                                if(match) {
-                                                    list.push({codigo: match[1], descricao: match[2], extra: a.nome_ano.join(', ')});
+                                                if (match) {
+                                                    list.push({ codigo: match[1], descricao: match[2], extra: a.nome_ano.join(', ') });
                                                 } else {
-                                                    list.push({codigo: '', descricao: h.nome_habilidade, extra: a.nome_ano.join(', ')});
+                                                    list.push({ codigo: '', descricao: h.nome_habilidade, extra: a.nome_ano.join(', ') });
                                                 }
                                             });
                                         }
@@ -323,9 +323,9 @@ const app = {
                 const discData = getNestedData(data, disciplina);
                 if (discData && discData.ano) {
                     discData.ano.forEach(a => {
-                        if(a.codigo_habilidade) {
+                        if (a.codigo_habilidade) {
                             a.codigo_habilidade.forEach(h => {
-                                list.push({codigo: h.nome_codigo, descricao: h.nome_habilidade, extra: a.nome_ano.join(', ')});
+                                list.push({ codigo: h.nome_codigo, descricao: h.nome_habilidade, extra: a.nome_ano.join(', ') });
                             });
                         }
                     });
@@ -334,7 +334,7 @@ const app = {
 
             this.bnccCurrentData = list;
             this.renderBnccResults(list);
-            this.filterBnccResults(); 
+            this.filterBnccResults();
 
         } catch (e) {
             resultsContainer.innerHTML = `<p style="text-align:center; color: var(--danger-color); padding: 20px;">
@@ -347,12 +347,12 @@ const app = {
     renderBnccResults(dataArray) {
         const resultsContainer = document.getElementById('bnccResults');
         resultsContainer.innerHTML = '';
-        
-        if(!dataArray || dataArray.length === 0) {
+
+        if (!dataArray || dataArray.length === 0) {
             resultsContainer.innerHTML = '<p style="text-align:center; margin-top: 20px;">Nenhum resultado encontrado nesta categoria.</p>';
             return;
         }
-        
+
         dataArray.forEach((item, index) => {
             const codigo = item.codigo || '';
             const descricao = item.descricao || '';
@@ -367,7 +367,7 @@ const app = {
             div.style.gap = '12px';
             div.style.alignItems = 'flex-start';
             div.style.transition = 'background 0.2s';
-            
+
             // O value do checkbox recebe apenas o INDEX numérico (Evita quebrar o HTML com aspas duplas no texto)
             div.innerHTML = `
                 <input type="checkbox" class="bncc-checkbox" id="bncc_item_${index}" value="${index}" style="margin-top: 4px; transform: scale(1.2); cursor: pointer;">
@@ -386,10 +386,10 @@ const app = {
         const rawTerm = document.getElementById('bnccSearchInput').value;
         const term = rawTerm.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         const items = document.querySelectorAll('#bnccResults > div');
-        
+
         items.forEach(item => {
             const text = item.innerText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            if(text.includes(term)) {
+            if (text.includes(term)) {
                 item.style.display = 'flex';
             } else {
                 item.style.display = 'none';
@@ -399,43 +399,43 @@ const app = {
 
     insertSelectedBncc() {
         const checkboxes = document.querySelectorAll('.bncc-checkbox:checked');
-        if(checkboxes.length === 0) {
+        if (checkboxes.length === 0) {
             alert('Marque ao menos uma caixa para inserir.');
             return;
         }
-        
+
         let combinedText = [];
         checkboxes.forEach(cb => {
             // Usa o Index para buscar o texto limpo direto da Matriz em memória
             const index = parseInt(cb.value);
             const item = this.bnccCurrentData[index];
-            if(item) {
+            if (item) {
                 const line = (item.codigo ? `${item.codigo} - ` : '') + item.descricao;
                 combinedText.push(line);
             }
         });
-        
+
         if (this.state.activeBlockId) {
             const blockEl = document.querySelector(`[data-id="${this.state.activeBlockId}"]`);
             if (blockEl) {
                 const habInput = blockEl.querySelector('.habilidade-input');
                 if (habInput) {
                     const currentVal = habInput.value.trim();
-                    
+
                     // Adiciona quebra de linha dupla para visualização bonita
-                    if(currentVal) {
+                    if (currentVal) {
                         habInput.value = currentVal + '\n\n' + combinedText.join('\n\n');
                     } else {
                         habInput.value = combinedText.join('\n\n');
                     }
-                    
+
                     // Dispara evento para salvar no LocalStorage e dá um feedback visual verde rápido
-                    habInput.dispatchEvent(new Event('input', { bubbles: true })); 
+                    habInput.dispatchEvent(new Event('input', { bubbles: true }));
                     this.saveState();
-                    
+
                     habInput.style.backgroundColor = '#dcfce7';
                     setTimeout(() => habInput.style.backgroundColor = 'transparent', 600);
-                    
+
                 } else {
                     alert('Este bloco não possui o campo de habilidade.');
                 }
@@ -457,10 +457,10 @@ const app = {
             const sel = window.getSelection();
             sel.removeAllRanges();
             sel.addRange(this.state.savedSelection);
-            
+
             let node = this.state.savedSelection.commonAncestorContainer;
-            if(node.nodeType === 3) node = node.parentNode;
-            if(node && node.focus) node.focus();
+            if (node.nodeType === 3) node = node.parentNode;
+            if (node && node.focus) node.focus();
 
             document.execCommand('insertText', false, char);
         }
@@ -481,7 +481,7 @@ const app = {
         let node = selection.anchorNode;
         let isQuote = false;
         let quoteNode = null;
-        
+
         while (node && node.nodeName !== 'DIV' && !node.classList?.contains('question-text') && !node.classList?.contains('alt-text')) {
             if (node.nodeName === 'BLOCKQUOTE') {
                 isQuote = true;
@@ -508,7 +508,7 @@ const app = {
         let parent = sel.getRangeAt(0).commonAncestorContainer;
         if (parent.nodeType === 3) parent = parent.parentNode;
 
-        let currentSizePx = 12; 
+        let currentSizePx = 12;
         const computedStyle = window.getComputedStyle(parent);
         if (computedStyle.fontSize) {
             currentSizePx = Math.round(parseFloat(computedStyle.fontSize));
@@ -530,10 +530,10 @@ const app = {
             const span = document.createElement('span');
             span.className = 'custom-size';
             span.style.fontSize = newSizePx + 'px';
-            
+
             span.appendChild(range.extractContents());
             range.insertNode(span);
-            
+
             sel.removeAllRanges();
             const newRange = document.createRange();
             newRange.selectNodeContents(span);
@@ -552,12 +552,12 @@ const app = {
             document.body.appendChild(ghost);
         }
         ghost.innerText = size;
-        
+
         ghost.classList.remove('show');
-        void ghost.offsetWidth; 
-        
+        void ghost.offsetWidth;
+
         ghost.classList.add('show');
-        
+
         clearTimeout(this.ghostTimer);
         this.ghostTimer = setTimeout(() => {
             ghost.classList.remove('show');
@@ -615,19 +615,19 @@ const app = {
                 if (Array.isArray(importedBlocks)) {
                     importedBlocks.forEach(block => {
                         block.id = this.generateId();
-                        if(block.locked === undefined) {
-                            block.locked = block.width === 'narrow' ? false : true; 
+                        if (block.locked === undefined) {
+                            block.locked = block.width === 'narrow' ? false : true;
                         }
-                        this.state.blocks.push(block); 
+                        this.state.blocks.push(block);
                     });
-                    
-                    this.renderBlocks(); 
+
+                    this.renderBlocks();
                     this.saveState();
                     alert(`${importedBlocks.length} blocos importados com sucesso!`);
-                    
+
                     setTimeout(() => {
                         const scrollContainer = document.querySelector('.paper-container');
-                        if(scrollContainer) scrollContainer.scrollTop = scrollContainer.scrollHeight;
+                        if (scrollContainer) scrollContainer.scrollTop = scrollContainer.scrollHeight;
                     }, 100);
 
                 } else {
@@ -641,15 +641,15 @@ const app = {
         event.target.value = '';
     },
 
-    changeFontSize() { 
-        this.state.fontSize = document.getElementById('fontSizeSelect').value; 
-        this.applyGlobalSettings(); 
+    changeFontSize() {
+        this.state.fontSize = document.getElementById('fontSizeSelect').value;
+        this.applyGlobalSettings();
 
         document.querySelectorAll('.question-text, .alt-text, .exam-instructions, .text-content').forEach(container => {
             container.querySelectorAll('*:not(math-field):not(.math-wrapper)').forEach(el => {
-                if(el.style.fontSize) {
-                    el.style.fontSize = ''; 
-                    if(el.getAttribute('style') === '') el.removeAttribute('style');
+                if (el.style.fontSize) {
+                    el.style.fontSize = '';
+                    if (el.getAttribute('style') === '') el.removeAttribute('style');
                 }
             });
             container.querySelectorAll('font[size]').forEach(el => {
@@ -662,7 +662,7 @@ const app = {
             });
         });
 
-        this.saveState(); 
+        this.saveState();
     },
 
     saveState() {
@@ -694,7 +694,7 @@ const app = {
                     id, type, mode: 'edit', locked,
                     text: blockEl.querySelector('.question-text') ? blockEl.querySelector('.question-text').innerHTML : originalBlock.text
                 });
-            } else if (type === 'spacer') { 
+            } else if (type === 'spacer') {
                 blocks.push({
                     id, type, mode: 'edit', locked,
                     height: blockEl.querySelector('.spacer-slider') ? blockEl.querySelector('.spacer-slider').value : originalBlock.height
@@ -708,12 +708,12 @@ const app = {
                     const alts = [];
                     let correctAltIndex = null;
                     let correctVFArray = originalBlock.correctVF || [];
-                    
-                    if(qType === 'multiple') {
+
+                    if (qType === 'multiple') {
                         blockEl.querySelectorAll('.alternative-item').forEach((item, index) => {
                             alts.push(item.querySelector('.alt-text').innerHTML);
                             const radio = item.querySelector('.alt-radio');
-                            if(radio && radio.checked) correctAltIndex = index;
+                            if (radio && radio.checked) correctAltIndex = index;
                         });
                     } else if (qType === 'vf') {
                         blockEl.querySelectorAll('.alternative-item').forEach((item, index) => {
@@ -751,26 +751,26 @@ const app = {
 
             if (data.columns !== undefined) this.state.columns = data.columns;
 
-            if(data.header) {
+            if (data.header) {
                 document.querySelector('[data-field="title"]').innerText = data.header.title || '';
                 document.querySelector('[data-field="school"]').innerText = data.header.school || '';
                 document.querySelector('[data-field="class"]').innerText = data.header.class || '';
                 document.querySelector('[data-field="date"]').innerText = data.header.date || '';
-                if(document.querySelector('[data-field="teacher"]')) {
+                if (document.querySelector('[data-field="teacher"]')) {
                     document.querySelector('[data-field="teacher"]').innerText = data.header.teacher || 'Nome do Professor';
                 }
-                
-                if(data.header.instructions) document.querySelector('[data-field="instructions"]').innerHTML = data.header.instructions;
-                if(data.header.logo && data.header.logo.length > 50) {
+
+                if (data.header.instructions) document.querySelector('[data-field="instructions"]').innerHTML = data.header.instructions;
+                if (data.header.logo && data.header.logo.length > 50) {
                     const img = document.getElementById('logoPreview');
                     img.src = data.header.logo;
                     img.style.display = 'block';
                     document.getElementById('logoPlaceholder').style.display = 'none';
                 }
             }
-            if(data.blocks) {
-                data.blocks.forEach(b => { 
-                    if(b.locked === undefined) {
+            if (data.blocks) {
+                data.blocks.forEach(b => {
+                    if (b.locked === undefined) {
                         b.locked = (b.width === 'narrow') ? false : true;
                     }
                 });
@@ -780,7 +780,7 @@ const app = {
     },
 
     clearData() {
-        if(confirm("Toda a prova será apagada. Deseja continuar?")) {
+        if (confirm("Toda a prova será apagada. Deseja continuar?")) {
             localStorage.removeItem('enemBuilder_v53');
             localStorage.removeItem('enemBuilder_v52');
             localStorage.removeItem('enemBuilder_v51');
@@ -791,9 +791,9 @@ const app = {
     setActiveBlock(id) {
         this.state.activeBlockId = id;
         document.querySelectorAll('.block-item').forEach(el => el.classList.remove('active'));
-        if(id) {
+        if (id) {
             const el = document.querySelector(`[data-id="${id}"]`);
-            if(el) {
+            if (el) {
                 el.classList.add('active');
                 // NOVO: Ajusta a altura da textarea assim que o bloco se torna visível
                 setTimeout(() => {
@@ -818,18 +818,18 @@ const app = {
         if (this.state.columns === 1) {
             container.classList.remove('cols-2');
             container.classList.add('cols-1');
-            if(btn) btn.innerHTML = '<i class="ph ph-columns"></i> Mudar para 2 Colunas';
+            if (btn) btn.innerHTML = '<i class="ph ph-columns"></i> Mudar para 2 Colunas';
         } else {
             container.classList.remove('cols-1');
             container.classList.add('cols-2');
-            if(btn) btn.innerHTML = '<i class="ph ph-list-dashes"></i> Mudar para 1 Coluna';
+            if (btn) btn.innerHTML = '<i class="ph ph-list-dashes"></i> Mudar para 1 Coluna';
         }
     },
 
     toggleBlockLock(id) {
         this.saveState();
         const block = this.state.blocks.find(b => b.id === id);
-        if(block) {
+        if (block) {
             block.locked = !block.locked;
             this.renderBlocks();
             this.saveState();
@@ -837,12 +837,12 @@ const app = {
     },
 
     renderBlocks() {
-        this.applyColumnState(); 
+        this.applyColumnState();
         const container = document.getElementById('blocksContainer');
         const scrollContainer = document.querySelector('.paper-container');
-        
+
         let currentScroll = 0;
-        if(scrollContainer) currentScroll = scrollContainer.scrollTop; 
+        if (scrollContainer) currentScroll = scrollContainer.scrollTop;
 
         container.innerHTML = '';
 
@@ -856,18 +856,18 @@ const app = {
 
             if (block.type === 'divider') el = this.createDividerDOM(block);
             else if (block.type === 'text') el = this.createTextEditDOM(block);
-            else if (block.type === 'spacer') el = this.createSpacerDOM(block); 
+            else if (block.type === 'spacer') el = this.createSpacerDOM(block);
             else {
                 if (block.mode === 'setup') el = this.createQuestionSetupDOM(block);
                 else el = this.createQuestionEditDOM(block);
             }
-            
+
             el.classList.add(block.locked ? 'block-locked' : 'block-unlocked');
 
-            if(block.id === this.state.activeBlockId) el.classList.add('active');
-            
+            if (block.id === this.state.activeBlockId) el.classList.add('active');
+
             el.addEventListener('mousedown', (e) => {
-                if(!e.target.closest('.drag-handle') && !e.target.closest('math-field') && !e.target.closest('.delete-math') && !e.target.closest('button') && !e.target.closest('input.spacer-slider') && !e.target.closest('textarea.habilidade-input')) {
+                if (!e.target.closest('.drag-handle') && !e.target.closest('math-field') && !e.target.closest('.delete-math') && !e.target.closest('button') && !e.target.closest('input.spacer-slider') && !e.target.closest('textarea.habilidade-input')) {
                     this.setActiveBlock(block.id);
                 }
             });
@@ -879,8 +879,8 @@ const app = {
             mf.addEventListener('input', () => this.saveState());
         });
 
-        if(scrollContainer) {
-            scrollContainer.offsetHeight; 
+        if (scrollContainer) {
+            scrollContainer.offsetHeight;
             scrollContainer.scrollTop = currentScroll;
         }
     },
@@ -897,12 +897,12 @@ const app = {
             this.state.blocks.push(newBlock);
         }
         this.renderBlocks();
-        this.setActiveBlock(newBlock.id); 
+        this.setActiveBlock(newBlock.id);
         this.saveState();
-        
+
         setTimeout(() => {
             const el = document.querySelector(`[data-id="${newBlock.id}"]`);
-            if(el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 50);
     },
 
@@ -935,52 +935,52 @@ const app = {
 
     attachDragEvents(div, blockId) {
         const handle = div.querySelector('.drag-handle');
-        if(!handle) return;
-        
+        if (!handle) return;
+
         handle.addEventListener('mousedown', () => div.setAttribute('draggable', 'true'));
         handle.addEventListener('mouseup', () => div.setAttribute('draggable', 'false'));
-        
-        div.addEventListener('dragstart', (e) => { 
-            this.draggedId = blockId; 
-            e.dataTransfer.effectAllowed = 'move'; 
-            div.style.opacity = '0.5'; 
+
+        div.addEventListener('dragstart', (e) => {
+            this.draggedId = blockId;
+            e.dataTransfer.effectAllowed = 'move';
+            div.style.opacity = '0.5';
             this.setActiveBlock(null);
         });
-        
-        div.addEventListener('dragend', () => { 
-            div.style.opacity = '1'; 
-            div.setAttribute('draggable', 'false'); 
+
+        div.addEventListener('dragend', () => {
+            div.style.opacity = '1';
+            div.setAttribute('draggable', 'false');
             document.querySelectorAll('.block-item').forEach(el => {
                 el.classList.remove('drag-over-top', 'drag-over-bottom');
             });
         });
-        
+
         div.addEventListener('dragover', (e) => {
-            e.preventDefault(); 
+            e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
             const rect = div.getBoundingClientRect();
-            
+
             div.classList.remove('drag-over-top', 'drag-over-bottom');
-            
+
             const isAfter = e.clientY > (rect.top + rect.height / 2);
             if (isAfter) {
                 div.classList.add('drag-over-bottom');
             } else {
                 div.classList.add('drag-over-top');
             }
-            
+
             div.dataset.dropPos = isAfter ? 'after' : 'before';
         });
-        
+
         div.addEventListener('dragleave', () => {
             div.classList.remove('drag-over-top', 'drag-over-bottom');
         });
-        
+
         div.addEventListener('drop', (e) => {
             e.preventDefault();
             const position = div.dataset.dropPos || 'before';
             div.classList.remove('drag-over-top', 'drag-over-bottom');
-            
+
             if (this.draggedId && this.draggedId !== blockId) {
                 this.reorderBlocks(this.draggedId, blockId, position);
             }
@@ -991,17 +991,17 @@ const app = {
         this.saveState();
         const draggedIndex = this.state.blocks.findIndex(b => b.id === draggedId);
         let targetIndex = this.state.blocks.findIndex(b => b.id === targetId);
-        
-        if(draggedIndex > -1 && targetIndex > -1) {
+
+        if (draggedIndex > -1 && targetIndex > -1) {
             const [draggedBlock] = this.state.blocks.splice(draggedIndex, 1);
             targetIndex = this.state.blocks.findIndex(b => b.id === targetId);
-            
+
             if (position === 'after') {
                 this.state.blocks.splice(targetIndex + 1, 0, draggedBlock);
             } else {
                 this.state.blocks.splice(targetIndex, 0, draggedBlock);
             }
-            
+
             this.renderBlocks();
             this.saveState();
         }
@@ -1031,12 +1031,46 @@ const app = {
     },
 
     deleteBlock(id) {
-        this.saveState();
-        this.state.blocks = this.state.blocks.filter(b => b.id !== id);
-        if(this.state.activeBlockId === id) this.state.activeBlockId = null;
-        this.renderBlocks();
-        this.saveState();
-    },
+        const blockEl = document.querySelector(`[data-id="${id}"]`);
+        if (!blockEl) return;
+        
+        const controls = blockEl.querySelector('.block-controls');
+        if (!controls) return;
+
+        // 1. MATA OS FANTASMAS: Limpa TUDO que for popover antes de abrir outro
+        document.querySelectorAll('.delete-confirm-popover').forEach(el => el.remove());
+
+        // 2. Cria o novo popover com apenas UM botão
+        const popover = document.createElement('div');
+        popover.className = 'delete-confirm-popover no-print';
+        popover.innerHTML = `
+            <button type="button" onclick="app.confirmDelete('${id}')">Excluir?</button>
+        `;
+        
+        controls.style.position = 'relative';
+        controls.appendChild(popover);
+        
+        // 3. Lógica segura para fechar ao clicar fora (evita sobras na memória)
+        setTimeout(() => {
+            const closeHandler = (e) => {
+                // Só tenta fechar se o popover ainda existir na tela
+                if (popover && document.body.contains(popover) && !popover.contains(e.target)) {
+                    popover.remove();
+                }
+                // Remove este "espião de clique" da memória assim que ele agir
+                document.removeEventListener('click', closeHandler);
+            };
+            document.addEventListener('click', closeHandler);
+        }, 10);
+    },
+
+    confirmDelete(id) {
+        this.saveState(); // Salva o estado para o Ctrl+Z funcionar
+        this.state.blocks = this.state.blocks.filter(b => b.id !== id);
+        if(this.state.activeBlockId === id) this.state.activeBlockId = null;
+        this.renderBlocks();
+        this.saveState(); // Atualiza a prova limpa
+    },
 
     toggleSetupFields(id) {
         const type = document.getElementById(`qType_${id}`).value;
@@ -1087,14 +1121,14 @@ const app = {
             b.qType = document.getElementById(`qType_${id}`).value;
             b.numLines = parseInt(document.getElementById(`numLines_${id}`) ? document.getElementById(`numLines_${id}`).value : 5);
             b.mode = 'edit';
-            
-            if(b.qType === 'multiple') {
+
+            if (b.qType === 'multiple') {
                 b.numAlts = parseInt(document.getElementById(`numAlts_${id}`).value);
                 const letters = ['A', 'B', 'C', 'D', 'E'];
-                b.alternatives = Array.from({length: b.numAlts}, (_, i) => `Alternativa ${letters[i]}`);
+                b.alternatives = Array.from({ length: b.numAlts }, (_, i) => `Alternativa ${letters[i]}`);
             } else if (b.qType === 'vf') {
                 b.numAlts = parseInt(document.getElementById(`numVF_${id}`).value);
-                b.alternatives = Array.from({length: b.numAlts}, () => `Afirmação...`);
+                b.alternatives = Array.from({ length: b.numAlts }, () => `Afirmação...`);
                 b.correctVF = Array(b.numAlts).fill('V');
             }
 
@@ -1218,7 +1252,7 @@ const app = {
         div.dataset.id = block.id; div.dataset.type = 'question'; div.dataset.mode = 'edit';
 
         let contentHTML = '';
-        if(block.qType === 'multiple') {
+        if (block.qType === 'multiple') {
             const letters = ['A', 'B', 'C', 'D', 'E'];
             let altsHTML = '';
             block.alternatives.forEach((alt, i) => {
@@ -1248,7 +1282,7 @@ const app = {
             contentHTML += `<div class="alternatives-container">${altsHTML}</div>`;
         } else {
             let linesHTML = '';
-            for(let i=0; i<block.numLines; i++) { linesHTML += `<div class="open-line"></div>`; }
+            for (let i = 0; i < block.numLines; i++) { linesHTML += `<div class="open-line"></div>`; }
             contentHTML += `<div class="open-lines-container">${linesHTML}</div>`;
         }
 
@@ -1289,7 +1323,7 @@ QUESTÃO <span class="auto-q-number">${String(block.autoNumber).padStart(2, '0')
         div.querySelectorAll('.alt-text').forEach(el => el.addEventListener('input', () => this.saveState()));
         // NOVO: Evento que auto-ajusta a altura ao digitar ou ao receber o texto da BNCC
         div.querySelectorAll('textarea').forEach(ta => {
-            ta.addEventListener('input', function() {
+            ta.addEventListener('input', function () {
                 this.style.height = 'auto';
                 this.style.height = this.scrollHeight + 'px';
                 app.saveState();
@@ -1301,7 +1335,7 @@ QUESTÃO <span class="auto-q-number">${String(block.autoNumber).padStart(2, '0')
     createDividerDOM(block) {
         const div = document.createElement('div');
         div.className = 'divider-block block-item'; div.dataset.id = block.id; div.dataset.type = 'divider'; div.dataset.mode = 'edit';
-        
+
         div.innerHTML = `
             <div class="question-header no-print">
                 <div class="question-header-left">
@@ -1324,19 +1358,19 @@ QUESTÃO <span class="auto-q-number">${String(block.autoNumber).padStart(2, '0')
     exportXLSX() {
         this.saveState();
         const data = [];
-        
-        let questionCounter = 1; 
+
+        let questionCounter = 1;
 
         this.state.blocks.forEach(block => {
             if (block.type === 'question' && block.mode === 'edit') {
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = block.text;
                 let plainText = tempDiv.textContent || tempDiv.innerText || '';
-                
+
                 let gabaritoLetra = "Não preenchido";
                 let gabaritoTexto = "Não preenchido";
 
-                if(block.qType === 'multiple' && block.correctAlt !== null) {
+                if (block.qType === 'multiple' && block.correctAlt !== null) {
                     const letters = ['A', 'B', 'C', 'D', 'E'];
                     gabaritoLetra = letters[block.correctAlt];
                     const tempDivAlt = document.createElement('div');
@@ -1345,7 +1379,7 @@ QUESTÃO <span class="auto-q-number">${String(block.autoNumber).padStart(2, '0')
                 } else if (block.qType === 'vf') {
                     gabaritoLetra = "V/F";
                     gabaritoTexto = block.correctVF ? block.correctVF.join(' - ') : "Não preenchido";
-                } else if(block.qType === 'open') {
+                } else if (block.qType === 'open') {
                     gabaritoLetra = "Aberta";
                     gabaritoTexto = block.correctText || "Não preenchido";
                 }
