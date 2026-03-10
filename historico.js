@@ -1,54 +1,54 @@
-// historico.js - Sistema de Undo/Redo (Desfazer/Refazer)
+// historico.js - Sistema de Undo/Redo (Desfazer/Refazer) aprimorado
 
 document.addEventListener('DOMContentLoaded', () => {
     // Aguarda meio segundo para garantir que o app.js principal já inicializou
     setTimeout(() => {
         if (typeof app === 'undefined') {
-            console.error('App não encontrado. Verifique a ordem dos scripts no HTML.');
+            console.error('App não encontrado. Verifique a ordem dos scripts no ficheiro HTML.');
             return;
         }
 
-        const maxHistory = 10;
+        // LIMITE AUMENTADO: Guarda até 15 versões completas (incluindo imagens pesadas e blocos)
+        const maxHistory = 15;
         let undoStack = [];
         let redoStack = [];
         let isRestoring = false;
         let historyTimeout;
 
-        // 1. Salva o estado inicial (A prova assim que a página carrega)
+        // 1. Guarda o estado inicial (A prova assim que a página é carregada)
         const initialState = localStorage.getItem('enemBuilder_v53');
         if (initialState) {
             undoStack.push(initialState);
         }
 
-        // 2. Intercepta a função saveState original do seu app
+        // 2. Interceta a função saveState original
         const originalSaveState = app.saveState.bind(app);
 
         app.saveState = function() {
-            // Executa o salvamento normal no LocalStorage
+            // Executa o processo normal de guardar no LocalStorage
             originalSaveState();
 
-            // Se for o script restaurando um estado antigo, ignora para não criar loop
+            // Se for o script a restaurar um estado antigo, ignora para não criar um loop infinito
             if (isRestoring) return;
 
-            // Debounce: Agrupa alterações rápidas. 
-            // Só salva o "passo" se o usuário parar de interagir por 500ms
+            // Debounce otimizado (300ms): Capta alterações de blocos, textos e imagens com mais agilidade
             clearTimeout(historyTimeout);
             historyTimeout = setTimeout(() => {
                 const currentState = localStorage.getItem('enemBuilder_v53');
 
-                // Só adiciona se o estado novo for diferente do último salvo
+                // Só adiciona ao histórico se o estado novo for realmente diferente do último guardado
                 if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== currentState) {
                     undoStack.push(currentState);
 
-                    // Mantém apenas os últimos 10 passos (+1 para o estado atual no topo)
+                    // Mantém os últimos 15 passos da prova
                     if (undoStack.length > maxHistory + 1) { 
                         undoStack.shift();
                     }
 
-                    // Ao fazer uma nova alteração, o futuro (refazer) é apagado
+                    // Ao fazer uma nova alteração, as ações para "refazer" são apagadas
                     redoStack = [];
                 }
-            }, 500);
+            }, 300); // Sensibilidade aumentada para não perder inserções de blocos
         };
 
         // 3. Função de Desfazer (Ctrl + Z)
@@ -72,24 +72,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // 5. Injeta o estado antigo de volta no app
+        // 5. Injeta o estado antigo de volta no ecrã
         function restaurarEstado(stateStr) {
             isRestoring = true;
 
-            // Devolve os dados pro LocalStorage
+            // Devolve os dados para o LocalStorage
             localStorage.setItem('enemBuilder_v53', stateStr);
 
-            // Força o app a recarregar as variáveis de memória
+            // Força a aplicação a recarregar as variáveis da memória
             app.loadState();
 
-            // Redesenha os blocos na tela
+            // Redesenha os blocos visuais de forma idêntica ao passo anterior
             if (app.state.blocks.length === 0) {
                 app.addQuestion();
             } else {
                 app.renderBlocks();
             }
 
-            // Aplica fonte se tiver mudado
+            // Aplica tamanhos de letra caso tenham mudado
             app.applyGlobalSettings();
 
             isRestoring = false;
@@ -97,11 +97,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 6. Configura os atalhos de teclado globais
         document.addEventListener('keydown', (e) => {
-            // Verifica se o foco NÃO está num campo de título/input padrão nativo (para não roubar o Ctrl+Z nativo do navegador em pequenos textos)
-            // Como usamos contenteditable para quase tudo, isso vai proteger a estrutura da prova inteira.
-            
+            // Previne o conflito com as teclas do próprio sistema operativo
             if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'z') {
-                e.preventDefault(); // Impede o comportamento padrão do Windows
+                e.preventDefault(); 
                 window.desfazer();
             } else if (e.ctrlKey && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) {
                 e.preventDefault();
