@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clearTimeout(tempoLegenda); // Zera o cronômetro anterior se houver
             tempoLegenda = setTimeout(() => {
                 tooltip.classList.remove('show');
-            }, 3000); // 3000 ms = 3 segundos
+            }, 2000); // 3000 ms = 3 segundos
         }
     });
 
