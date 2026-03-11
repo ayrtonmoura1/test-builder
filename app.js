@@ -1,10 +1,49 @@
 const app = {
     state: {
         fontSize: '12px',
-        columns: 1,
+        columns: 2,
+        studentStyle: 'line', 
         blocks: [],
         activeBlockId: null,
         savedSelection: null
+    },
+
+    changeStudentStyle() {
+        this.state.studentStyle = document.getElementById('studentStyleSelect').value;
+        this.applyStudentStyle();
+        this.saveState();
+    },
+
+    applyStudentStyle() {
+        const line = document.getElementById('studentLine');
+        const gridContainer = document.getElementById('studentGridContainer');
+        
+        if (!line || !gridContainer) return;
+
+        if (this.state.studentStyle === 'grid') {
+            line.style.display = 'none';
+            gridContainer.style.display = 'flex';
+            this.renderStudentGrid(); 
+        } else {
+            line.style.display = 'block';
+            gridContainer.style.display = 'none';
+        }
+    },
+
+    renderStudentGrid() {
+        const container = document.getElementById('studentGridContainer');
+        if (!container || container.innerHTML !== '') return; // Só desenha se estiver vazio
+        
+        const grid = document.createElement('div');
+        grid.className = 'student-grid';
+        
+        // Desenha 52 quadradinhos (2 linhas de 26)
+        for (let i = 0; i < 44; i++) {
+            const box = document.createElement('div');
+            box.className = 'student-grid-box';
+            grid.appendChild(box);
+        }
+        container.appendChild(grid);
     },
 
     // --- MATRIZ DA BNCC (URLs DA API EXTERNA) ---
@@ -46,13 +85,16 @@ const app = {
     },
     bnccCurrentData: [],
 
-    init() {
+init() {
         this.loadState();
         this.applyGlobalSettings();
         this.bindHeaderEvents();
         this.bindPasteEvent();
         this.buildSymbolPicker();
         this.bindEmojiPicker();
+
+        // NOVO: Liga o monitor de cliques globais (Essencial para as barras funcionarem direito)
+        document.addEventListener('mousedown', (e) => this.handleGlobalClick(e));
 
         // NOVO: Injeta a barra de ferramentas no cabeçalho sem o botão da BNCC (false)
         const headerRtfContainer = document.getElementById('headerRtfContainer');
@@ -66,12 +108,12 @@ const app = {
             this.renderBlocks();
         }
     },
-
-    handleGlobalClick(event) {
+   handleGlobalClick(event) {
         // Controle de foco do cabeçalho
         const header = document.querySelector('.exam-header');
         if (header) {
-            if (event.target.closest('.exam-header') || event.target.closest('.modal-overlay') || event.target.closest('.rtf-toolbar')) {
+            // Removido o verificador da '.rtf-toolbar' daqui para não bugar com os blocos
+            if (event.target.closest('.exam-header') || event.target.closest('.modal-overlay')) {
                 header.classList.add('active-header');
             } else {
                 header.classList.remove('active-header');
@@ -79,7 +121,7 @@ const app = {
         }
 
         // Controle de foco dos blocos
-        if (!event.target.closest('.block-item') && !event.target.closest('.toolbar') && !event.target.closest('.modal-overlay') && !event.target.closest('.rtf-toolbar')) {
+        if (!event.target.closest('.block-item') && !event.target.closest('.toolbar') && !event.target.closest('.modal-overlay')) {
             this.setActiveBlock(null);
         }
     },
@@ -469,7 +511,16 @@ const app = {
     },
 
     insertMath() {
-        const mathHTML = `&nbsp;<span class="math-wrapper" contenteditable="false"><span class="delete-math no-print" onclick="this.parentElement.remove(); app.saveState();" title="Excluir equação">×</span><math-field virtual-keyboard-mode="off" placeholder="f(x)"></math-field></span>&nbsp;`;
+        // Habilitamos o "onfocus" para que as ferramentas extras de matemática 
+        // apareçam na tela do celular/PC apenas quando o professor clicar na equação.
+        const mathHTML = `&nbsp;<span class="math-wrapper" contenteditable="false"><span class="delete-math no-print" onclick="this.parentElement.remove(); app.saveState();" title="Excluir equação">×</span><math-field virtual-keyboard-mode="onfocus" placeholder="f(x)"></math-field></span>&nbsp;`;
+        document.execCommand('insertHTML', false, mathHTML);
+        this.saveState();
+    },
+
+    insertFraction() {
+        // Insere uma equação já moldada como fração (caixa em cima, caixa embaixo)
+        const mathHTML = `&nbsp;<span class="math-wrapper" contenteditable="false"><span class="delete-math no-print" onclick="this.parentElement.remove(); app.saveState();" title="Excluir equação">×</span><math-field virtual-keyboard-mode="onfocus">\\frac{\\placeholder{}}{\\placeholder{}}</math-field></span>&nbsp;`;
         document.execCommand('insertHTML', false, mathHTML);
         this.saveState();
     },
@@ -731,13 +782,14 @@ const app = {
                         correctAlt: correctAltIndex,
                         correctVF: correctVFArray,
                         correctText: blockEl.querySelector('.gabarito-input') ? blockEl.querySelector('.gabarito-input').value : '',
-                        habilidade: blockEl.querySelector('.habilidade-input') ? blockEl.querySelector('.habilidade-input').value : originalBlock.habilidade
+                        habilidade: blockEl.querySelector('.habilidade-input') ? blockEl.querySelector('.habilidade-input').value : originalBlock.habilidade,
+                        comentario: blockEl.querySelector('.comentario-input') ? blockEl.querySelector('.comentario-input').value : originalBlock.comentario
                     });
                 }
             }
         });
 
-        const dataToSave = { fontSize: this.state.fontSize, columns: this.state.columns, header: headerData, blocks };
+        const dataToSave = { fontSize: this.state.fontSize, columns: this.state.columns, studentStyle: this.state.studentStyle, header: headerData, blocks }; // Adicionei o studentStyle aqui!
         localStorage.setItem('enemBuilder_v53', JSON.stringify(dataToSave));
         this.state.blocks = blocks;
     },
@@ -750,6 +802,10 @@ const app = {
             document.getElementById('fontSizeSelect').value = this.state.fontSize;
 
             if (data.columns !== undefined) this.state.columns = data.columns;
+
+            if (data.studentStyle) this.state.studentStyle = data.studentStyle;
+            if (document.getElementById('studentStyleSelect')) document.getElementById('studentStyleSelect').value = this.state.studentStyle;
+            this.applyStudentStyle();
 
             if (data.header) {
                 document.querySelector('[data-field="title"]').innerText = data.header.title || '';
@@ -777,6 +833,8 @@ const app = {
                 this.state.blocks = data.blocks;
             }
         }
+
+        
     },
 
     clearData() {
@@ -929,7 +987,35 @@ const app = {
         }
     },
 
-    formatText(command, value = null) { document.execCommand(command, false, value); this.saveState(); },
+    formatText(command, value = null) { 
+        document.execCommand(command, false, value); 
+        this.saveState(); 
+        
+        // NOVO: Força a barra a atualizar o visual no exato momento do clique!
+        this.updateToolbarUI(); 
+    },
+    updateToolbarUI() {
+        // Procura a barra de ferramentas do bloco que está ativo no momento
+        const activeToolbar = document.querySelector('.block-item.active .rtf-toolbar') || document.querySelector('.exam-header.active-header .rtf-toolbar');
+        if (!activeToolbar) return;
+
+        // Lista dos comandos que queremos vigiar
+        const commands = ['bold', 'italic', 'underline', 'superscript', 'subscript', 'justifyLeft', 'justifyCenter', 'justifyRight'];
+        
+        commands.forEach(cmd => {
+            const btn = activeToolbar.querySelector(`[data-cmd="${cmd}"]`);
+            if (btn) {
+                // Tenta ler o estado atual do cursor no navegador
+                try {
+                    if (document.queryCommandState(cmd)) {
+                        btn.classList.add('active-format');
+                    } else {
+                        btn.classList.remove('active-format');
+                    }
+                } catch (e) {} // Ignora erros inofensivos em browsers antigos
+            }
+        });
+    },
 
     draggedId: null,
 
@@ -1009,23 +1095,23 @@ const app = {
 
     addDivider() {
         this.saveState();
-        this.insertBlockContextually({ id: this.generateId(), type: 'divider', locked: true, text: 'LINGUAGENS, CÓDIGOS E SUAS TECNOLOGIAS', mode: 'edit' });
+        this.insertBlockContextually({ id: this.generateId(), type: 'divider', locked: false, text: 'LINGUAGENS, CÓDIGOS E SUAS TECNOLOGIAS', mode: 'edit' });
     },
 
     addTextBlock() {
         this.saveState();
-        this.insertBlockContextually({ id: this.generateId(), type: 'text', locked: true, text: '', mode: 'edit' });
+        this.insertBlockContextually({ id: this.generateId(), type: 'text', locked: false, text: '', mode: 'edit' });
     },
 
     addSpacer() {
         this.saveState();
-        this.insertBlockContextually({ id: this.generateId(), type: 'spacer', locked: true, height: 100, mode: 'edit' });
+        this.insertBlockContextually({ id: this.generateId(), type: 'spacer', locked: false, height: 100, mode: 'edit' });
     },
 
     addQuestion() {
         this.saveState();
         this.insertBlockContextually({
-            id: this.generateId(), type: 'question', locked: true, mode: 'setup', qType: 'multiple',
+            id: this.generateId(), type: 'question', locked: false, mode: 'setup', qType: 'multiple',
             numAlts: 5, numLines: 5, text: '', alternatives: [], correctAlt: null, correctVF: [], correctText: '', habilidade: ''
         });
     },
@@ -1157,28 +1243,33 @@ const app = {
 
         return `
             <div class="rtf-toolbar no-print">
-                <button type="button" title="Negrito" onmousedown="event.preventDefault(); app.formatText('bold')"><b>B</b></button>
-                <button type="button" title="Itálico" onmousedown="event.preventDefault(); app.formatText('italic')"><i>I</i></button>
-                <button type="button" title="Sublinhado" onmousedown="event.preventDefault(); app.formatText('underline')"><u>U</u></button>
+                <button type="button" data-cmd="bold" title="Negrito" onmousedown="event.preventDefault(); app.formatText('bold')"><b>B</b></button>
+                <button type="button" data-cmd="italic" title="Itálico" onmousedown="event.preventDefault(); app.formatText('italic')"><i>I</i></button>
+                <button type="button" data-cmd="underline" title="Sublinhado" onmousedown="event.preventDefault(); app.formatText('underline')"><u>U</u></button>
+                
                 <div class="rtf-divider"></div>
-                <button type="button" title="Aumentar Fonte (A+)" onmousedown="event.preventDefault(); app.formatTextSize('increase')"><b>A&uarr;</b></button>
-                <button type="button" title="Diminuir Fonte (A-)" onmousedown="event.preventDefault(); app.formatTextSize('decrease')"><b>A&darr;</b></button>
+                <button type="button" data-cmd="superscript" title="Sobrescrito (Ex: x²)" onmousedown="event.preventDefault(); app.formatText('superscript')">X²</button>
+                <button type="button" data-cmd="subscript" title="Subscrito (Ex: H₂O)" onmousedown="event.preventDefault(); app.formatText('subscript')">X₂</button>
+                
+                <div class="rtf-divider"></div>
+                <button type="button" title="Aumentar Fonte" onmousedown="event.preventDefault(); app.formatTextSize('increase')"><b>A&uarr;</b></button>
+                <button type="button" title="Diminuir Fonte" onmousedown="event.preventDefault(); app.formatTextSize('decrease')"><b>A&darr;</b></button>
                 <button type="button" title="Limpar Formatação" onmousedown="event.preventDefault(); document.execCommand('removeFormat', false, null); app.saveState();"><i class="ph ph-eraser"></i></button>
+                
                 <div class="rtf-divider"></div>
                 <button type="button" title="MAIÚSCULAS" onmousedown="event.preventDefault(); app.changeCase('upper')"><b>AA</b></button>
                 <button type="button" title="minúsculas" onmousedown="event.preventDefault(); app.changeCase('lower')"><b>aa</b></button>
-                <button type="button" title="Primeira Letra" onmousedown="event.preventDefault(); app.changeCase('title')"><b>Aa</b></button>
+                
                 <div class="rtf-divider"></div>
-                <button type="button" title="Alinhar Esquerda" onmousedown="event.preventDefault(); app.formatText('justifyLeft')"><i class="ph ph-text-align-left"></i></button>
-                <button type="button" title="Centralizar" onmousedown="event.preventDefault(); app.formatText('justifyCenter')"><i class="ph ph-text-align-center"></i></button>
-                <button type="button" title="Alinhar Direita" onmousedown="event.preventDefault(); app.formatText('justifyRight')"><i class="ph ph-text-align-right"></i></button>
-                <button type="button" title="Justificar" onmousedown="event.preventDefault(); app.formatText('justifyFull')"><i class="ph ph-text-align-justify"></i></button>
+                <button type="button" data-cmd="justifyLeft" title="Alinhar Esquerda" onmousedown="event.preventDefault(); app.formatText('justifyLeft')"><i class="ph ph-text-align-left"></i></button>
+                <button type="button" data-cmd="justifyCenter" title="Centralizar" onmousedown="event.preventDefault(); app.formatText('justifyCenter')"><i class="ph ph-text-align-center"></i></button>
+                <button type="button" data-cmd="justifyRight" title="Alinhar Direita" onmousedown="event.preventDefault(); app.formatText('justifyRight')"><i class="ph ph-text-align-right"></i></button>
+                
                 <div class="rtf-divider"></div>
-                <button type="button" title="Citação / Destacar Bloco" onmousedown="event.preventDefault(); app.toggleQuote()"><i class="ph ph-quotes"></i></button>
+                <button type="button" title="Inserir Equação Livre" class="btn-math" onmousedown="event.preventDefault(); app.insertMath()"><b>&sum; Eq</b></button>
+                
                 <div class="rtf-divider"></div>
-                <button type="button" title="Inserir Equação" class="btn-math" onmousedown="event.preventDefault(); app.insertMath()"><b>&sum; Eq</b></button>
-                <div class="rtf-divider"></div>
-                <button type="button" title="Símbolos e Emojis" class="btn-open-symbols" onmousedown="event.preventDefault(); app.openSymbolModal()"><i class="ph ph-smiley"></i> &Omega;</button>
+                <button type="button" title="Símbolos" class="btn-open-symbols" onmousedown="event.preventDefault(); app.openSymbolModal()"><i class="ph ph-smiley"></i> &Omega;</button>
                 ${bnccButton}
             </div>
         `;
@@ -1316,6 +1407,10 @@ QUESTÃO <span class="auto-q-number">${String(block.autoNumber).padStart(2, '0')
                     <label><i class="ph ph-target"></i> HABILIDADE COBRADA</label>
                     <textarea class="habilidade-input" placeholder="Descreva o que esta questão avalia (insira BNCC)..." oninput="app.saveState()">${block.habilidade || ''}</textarea>
                 </div>
+                <div class="gabarito-comentado-container">
+                    <label><i class="ph ph-chat-text"></i> GABARITO COMENTADO</label>
+                    <textarea class="comentario-input" placeholder="Explique por que esta é a resposta correta e as outras são falsas..." oninput="app.saveState()">${block.comentario || ''}</textarea>
+                </div>
             </div>
         `;
 
@@ -1331,6 +1426,9 @@ QUESTÃO <span class="auto-q-number">${String(block.autoNumber).padStart(2, '0')
         });
         return div;
     },
+
+
+
 
     createDividerDOM(block) {
         const div = document.createElement('div');
@@ -1402,7 +1500,18 @@ QUESTÃO <span class="auto-q-number">${String(block.autoNumber).padStart(2, '0')
         XLSX.utils.book_append_sheet(wb, ws, "Mapeamento da Prova");
         XLSX.writeFile(wb, `Gabarito_${Date.now()}.xlsx`);
     }
+
+    
 };
 
+// ... aqui termina o código antigo ...
 document.addEventListener('DOMContentLoaded', () => app.init());
+
+// --- Monitor de Formatação Contínuo ---
+// Sempre que o utilizador clicar pelo texto com o rato ou teclado, a barra atualiza
+document.addEventListener('selectionchange', () => {
+    if (typeof app !== 'undefined' && app.updateToolbarUI) {
+        app.updateToolbarUI();
+    }
+});
 
