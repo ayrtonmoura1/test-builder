@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Avaliações</title>
+    <title>Test Builder</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script defer src="https://unpkg.com/mathlive"></script>
@@ -11,23 +12,24 @@
     <link rel="stylesheet" href="styles.css">
 
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-FRY1Q4JDV8"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FRY1Q4JDV8"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
 
-  gtag('config', 'G-FRY1Q4JDV8');
-</script>
+        gtag('config', 'G-FRY1Q4JDV8');
+    </script>
 </head>
+
 <body>
 
     <aside class="toolbar no-print">
         <div class="logo-area">
             <i class="ph ph-exam"></i>
-            <h2>Construtor de avaliações</h2>
+            <h2>Test Builder</h2>
         </div>
-        
+
         <div class="tools-section config-section">
             <label class="config-label">
                 Tamanho da Fonte Global:
@@ -36,18 +38,27 @@
                     <option value="14px">Confortável (14px)</option>
                     <option value="16px">Grande (16px)</option>
                     <option value="18px">Extra (18px)</option>
-    
+
                 </select>
             </label>
+            <div class="config-label" style="margin-top: 10px;">
+                Campo do Estudante:
+                <select id="studentStyleSelect" onchange="app.changeStudentStyle()">
+                    <option value="line">Linha Simples</option>
+                    <option value="grid">Malha Quadriculada (ENEM)</option>
+                </select>
+            </div>
         </div>
 
         <div class="tools-section">
             <h3>Estrutura</h3>
             <div class="btn-grid">
-                <button class="btn-primary btn-full" onclick="app.addQuestion()"><i class="ph ph-plus-circle"></i> Inserir Questão</button>
+                <button class="btn-primary btn-full" onclick="app.addQuestion()"><i class="ph ph-plus-circle"></i>
+                    Inserir Questão</button>
                 <button onclick="app.addTextBlock()"><i class="ph ph-text-t"></i> Texto Livre</button>
                 <button onclick="app.addDivider()"><i class="ph ph-minus"></i> Separador</button>
-                <button class="btn-full" onclick="app.addSpacer()"><i class="ph ph-bounding-box"></i> Inserir Bloco Vazio</button>
+                <button class="btn-full" onclick="app.addSpacer()"><i class="ph ph-bounding-box"></i> Inserir Bloco
+                    Vazio</button>
             </div>
         </div>
 
@@ -63,36 +74,50 @@
         <div class="tools-section">
             <h3>Banco de Dados</h3>
             <div class="btn-grid">
-    <button class="btn-import" onclick="document.getElementById('importUpload').click()"><i class="ph ph-upload-simple"></i> Importar</button>
-    <input type="file" id="importUpload" accept=".json" class="no-print" style="display: none;" onchange="app.importJSON(event)">
-    <button class="btn-export" onclick="app.exportJSON()"><i class="ph ph-download-simple"></i> Exportar</button>
-</div>
+                <button class="btn-import" onclick="document.getElementById('importUpload').click()"><i
+                        class="ph ph-upload-simple"></i> Importar</button>
+                <input type="file" id="importUpload" accept=".json" class="no-print" style="display: none;"
+                    onchange="app.importJSON(event)">
+                <button class="btn-export" onclick="app.exportJSON()"><i class="ph ph-download-simple"></i>
+                    Exportar</button>
+            </div>
         </div>
-
+        <div style="margin: 15px 0 10px 0; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: bold; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+    <input type="checkbox" id="previewGabarito" onchange="FolhaResposta.togglePreview(this)" style="cursor: pointer; transform: scale(1.3); accent-color: var(--primary-color);">
+    <label for="previewGabarito" style="cursor: pointer; color: var(--text-main); user-select: none;">Visualizar Folha na Tela</label>
+</div>
+        <button type="button" class="btn-secondary btn-full" onclick="FolhaResposta.imprimir()">
+    <i class="ph ph-file-text"></i> Imprimir Folha de Respostas
+</button>
         <div class="tools-section">
             <h3>Finalizar</h3>
             <div class="btn-grid">
-                <button class="btn-secondary" onclick="window.print()"><i class="ph ph-printer"></i> PDF (Aluno)</button>
-                <button class="btn-secondary" onclick="printWithAnswers()" style="background: #059669; border-color: #047857;"><i class="ph ph-chalkboard-teacher"></i> PDF (Professor)</button>
-                <button class="btn-excel btn-full" onclick="app.exportXLSX()"><i class="ph ph-file-xls"></i> Gabarito em Excel</button>
+                <button class="btn-secondary" onclick="window.print()"><i class="ph ph-printer"></i> PDF
+                    (Aluno)</button>
+                <button class="btn-secondary" onclick="printWithAnswers()"
+                    style="background: #059669; border-color: #047857;"><i class="ph ph-chalkboard-teacher"></i> PDF
+                    (Professor)</button>
+                <button class="btn-excel btn-full" onclick="app.exportXLSX()"><i class="ph ph-file-xls"></i> Gabarito em
+                    Excel</button>
             </div>
         </div>
 
         <div class="tools-section bottom-tools">
-            <button class="btn-danger btn-full" onclick="app.clearData()"><i class="ph ph-trash"></i> Reiniciar Tudo</button>
+            <button class="btn-danger btn-full" onclick="app.clearData()"><i class="ph ph-trash"></i> Reiniciar
+                Tudo</button>
         </div>
     </aside>
 
     <main class="paper-container" onclick="app.handleGlobalClick(event)">
         <div id="paper" class="paper">
-            
+
             <header class="exam-header">
                 <div id="headerRtfContainer"></div>
-                
+
                 <div class="header-main-box">
-                    
+
                     <div class="header-top-section">
-                        
+
                         <div class="header-logo">
                             <label for="logoUpload" class="image-upload-wrapper">
                                 <div class="img-placeholder bg-logo" id="logoPlaceholder">
@@ -101,42 +126,55 @@
                                 <img id="logoPreview" src="" alt="Logo" style="display: none;">
                                 <div class="image-overlay no-print"><i class="ph ph-camera"></i></div>
                             </label>
-                            <input type="file" id="logoUpload" accept="image/*" class="no-print" style="display: none;" onchange="app.handleLogoUpload(event)">
+                            <input type="file" id="logoUpload" accept="image/*" class="no-print" style="display: none;"
+                                onchange="app.handleLogoUpload(event)">
                         </div>
-                        
+
                         <div class="header-texts">
                             <div class="h-row">
                                 <span class="label">AVALIAÇÃO:</span>
-                                <div class="editable-field title-field" contenteditable="true" data-field="title" onblur="app.saveState()">Digite aqui o título da avaliação</div>
+                                <div class="editable-field title-field" contenteditable="true" data-field="title"
+                                    onblur="app.saveState()">Digite aqui o título da avaliação</div>
                             </div>
                             <div class="h-row">
                                 <span class="label">ESCOLA:</span>
-                                <div class="editable-field" contenteditable="true" data-field="school" onblur="app.saveState()">Digite aqui o nome da Instituição</div>
+                                <div class="editable-field" contenteditable="true" data-field="school"
+                                    onblur="app.saveState()">Digite aqui o nome da Instituição</div>
                             </div>
                             <div class="h-row">
                                 <span class="label">PROFESSOR(A):</span>
-                                <div class="editable-field" contenteditable="true" data-field="teacher" onblur="app.saveState()">Digite aqui o nome do professor</div>
+                                <div class="editable-field" contenteditable="true" data-field="teacher"
+                                    onblur="app.saveState()">Digite aqui o nome do professor</div>
                             </div>
                             <div class="h-row-group">
                                 <div class="h-col" style="flex: 1.5;">
                                     <span class="label">TURMA:</span>
-                                    <div class="editable-field" contenteditable="true" data-field="class" onblur="app.saveState()">3º Ano A</div>
+                                    <div class="editable-field" contenteditable="true" data-field="class"
+                                        onblur="app.saveState()">3º Ano A</div>
                                 </div>
                                 <div class="h-col" style="flex: 1;">
                                     <span class="label">DATA:</span>
-                                    <div class="editable-field" contenteditable="true" data-field="date" onblur="app.saveState()">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                                    <div class="editable-field" contenteditable="true" data-field="date"
+                                        onblur="app.saveState()">
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="header-grade">
                             <div class="grade-label">NOTA</div>
                             <div class="grade-value"></div>
                         </div>
 
-                    </div> <div class="header-student-section">
+                    </div>
+                    <div class="header-student-section">
                         <div class="h-col" style="flex: 5;">
-                            <span class="label">ESTUDANTE:</span>
+                            <div class="header-student-section h-row">
+                                <span class="label">ESTUDANTE:</span>
+                                <div class="signature-line" id="studentLine" style="flex: 1;"></div>
+                                <div id="studentGridContainer" style="display: none; flex: 1; margin-left: 8px;"></div>
+                            </div>
                             <div class="signature-line"></div>
                         </div>
                         <div class="h-col" style="flex: 0.9;">
@@ -144,22 +182,28 @@
                             <div class="signature-line"></div>
                         </div>
                     </div>
-                    
+
                 </div>
 
-                <div class="exam-instructions" contenteditable="true" data-field="instructions" onblur="app.saveState()">
-                    <strong>INSTRUÇÕES:</strong> Preencha o cabeçalho. Marque apenas uma alternativa por questão. (Cole imagens e tabelas livremente).
+                <div class="exam-instructions" contenteditable="true" data-field="instructions"
+                    onblur="app.saveState()">
+                    <strong>INSTRUÇÕES:</strong> Preencha o cabeçalho. Marque apenas uma alternativa por questão. (Cole
+                    imagens e tabelas livremente).
                 </div>
             </header>
 
-            <div id="blocksContainer" class="blocks-container cols-1"></div>
+           <div class="blocks-container cols-2" id="blocksContainer"></div>
+
+            <div id="answerSheetContainer" class="answer-sheet-container"></div>
+
         </div>
         <footer class="app-footer no-print">
-        <p>&copy; 2026 - Ayrton Moura Souza Lima. Todos os direitos reservados.</p>
-    </footer>
+            <p>&copy; 2026 - Ayrton Moura Souza Lima. Todos os direitos reservados.</p>
+        </footer>
     </main>
 
-    <div id="symbolModalOverlay" class="modal-overlay no-print" style="display: none;" onclick="if(event.target===this) app.closeSymbolModal()">
+    <div id="symbolModalOverlay" class="modal-overlay no-print" style="display: none;"
+        onclick="if(event.target===this) app.closeSymbolModal()">
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Inserir Caracteres e Emojis</h3>
@@ -182,52 +226,61 @@
         </div>
     </div>
 
-    <div id="bnccModalOverlay" class="modal-overlay no-print" style="display: none;" onclick="if(event.target===this) app.closeBnccModal()">
-        <div class="modal-content" style="width: 750px; max-width: 95vw; height: 85vh; max-height: 650px; display: flex; flex-direction: column;">
+    <div id="bnccModalOverlay" class="modal-overlay no-print" style="display: none;"
+        onclick="if(event.target===this) app.closeBnccModal()">
+        <div class="modal-content"
+            style="width: 750px; max-width: 95vw; height: 85vh; max-height: 650px; display: flex; flex-direction: column;">
             <div class="modal-header">
                 <h3><i class="ph ph-list-numbers"></i> Consultar Habilidades BNCC</h3>
                 <button class="modal-close" onclick="app.closeBnccModal()">&times;</button>
             </div>
-            <div class="modal-body" style="padding: 15px; display: flex; flex-direction: column; gap: 12px; height: 100%; overflow: hidden; background: #f8fafc;">
+            <div class="modal-body"
+                style="padding: 15px; display: flex; flex-direction: column; gap: 12px; height: 100%; overflow: hidden; background: #f8fafc;">
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <select id="bnccEtapa" onchange="app.updateBnccDisciplinas()" style="padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 13px; font-weight: bold; color: var(--text-main); flex: 1;">
+                    <select id="bnccEtapa" onchange="app.updateBnccDisciplinas()"
+                        style="padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 13px; font-weight: bold; color: var(--text-main); flex: 1;">
                         <option value="">1. Selecione a Etapa...</option>
                         <option value="infantil">Educação Infantil</option>
                         <option value="fundamental">Ensino Fundamental</option>
                         <option value="medio">Ensino Médio</option>
                     </select>
-                    <select id="bnccDisciplina" disabled style="padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 13px; font-weight: bold; color: var(--text-main); flex: 1;">
+                    <select id="bnccDisciplina" disabled
+                        style="padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 13px; font-weight: bold; color: var(--text-main); flex: 1;">
                         <option value="">2. Selecione a Disciplina/Campo...</option>
                     </select>
-                    <button class="btn-primary" onclick="app.fetchBnccData()" style="padding: 8px 15px;"><i class="ph ph-magnifying-glass"></i> Buscar</button>
+                    <button class="btn-primary" onclick="app.fetchBnccData()" style="padding: 8px 15px;"><i
+                            class="ph ph-magnifying-glass"></i> Buscar</button>
                 </div>
                 <div>
-                    <input type="text" id="bnccSearchInput" placeholder="🔍 Digite para filtrar os resultados abaixo por código ou trecho do texto..." style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 13px;" oninput="app.filterBnccResults()">
+                    <input type="text" id="bnccSearchInput"
+                        placeholder="🔍 Digite para filtrar os resultados abaixo por código ou trecho do texto..."
+                        style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 13px;"
+                        oninput="app.filterBnccResults()">
                 </div>
-                <div id="bnccResults" style="flex: 1; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; background: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                <div id="bnccResults"
+                    style="flex: 1; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; background: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
                     <p style="text-align: center; color: var(--text-muted); margin-top: 30px;">
                         <i class="ph ph-books" style="font-size: 40px; opacity: 0.5;"></i><br>
                         Utilize os filtros acima e clique em "Buscar" para carregar as habilidades.
                     </p>
                 </div>
-                <div style="display: flex; justify-content: flex-end; padding-top: 10px; border-top: 1px solid var(--border-color);">
-                    <button class="btn-primary" onclick="app.insertSelectedBncc()" style="font-size: 13px; padding: 10px 20px;"><i class="ph ph-check-square-offset"></i> Inserir Selecionadas no Bloco</button>
+                <div
+                    style="display: flex; justify-content: flex-end; padding-top: 10px; border-top: 1px solid var(--border-color);">
+                    <button class="btn-primary" onclick="app.insertSelectedBncc()"
+                        style="font-size: 13px; padding: 10px 20px;"><i class="ph ph-check-square-offset"></i> Inserir
+                        Selecionadas no Bloco</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script src="app.js"></script>
-    <script src="print.js"></script> 
-    <script src="apoio.js"></script> 
+    <script src="print.js"></script>
+    <script src="apoio.js"></script>
     <script src="bncc_data.js"></script>
-    <script src="legenda.js"></script> 
-    <script src="historico.js"></script> 
-    <script 
+    <script src="legenda.js"></script>
+    <script src="historico.js"></script>
+    <script src="folhaResposta.js"></script>
 </body>
+
 </html>
-
-
-
-
-
