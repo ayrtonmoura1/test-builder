@@ -51,19 +51,29 @@ document.addEventListener('DOMContentLoaded', () => {
         'window.print()': 'Gera o PDF final da prova limpo, pronto para entregar ao aluno.',
         'printWithAnswers()': 'Gera o PDF destacando o gabarito e as habilidades BNCC para uso do professor.',
         'app.exportXLSX()': 'Baixa uma planilha Excel detalhada com as respostas e competências exigidas.',
-        'app.clearData()': 'Apaga permanentemente todo o conteúdo atual e inicia uma prova limpa.'
+        'app.clearData()': 'Apaga permanentemente todo o conteúdo atual e inicia uma prova limpa.',
+        
+        // --- NOVAS LEGENDAS DO GABARITO ---
+        'FolhaResposta.imprimir()': 'Gera e imprime a Folha de Respostas do aluno. Inclui grelha de 5 colunas e marcas de leitura ótica (OMR) para correção automática.',
+        'previewGabarito': 'Ativa a visualização em tempo real. Permite ver como ficará a Folha de Respostas na tela. Desmarque para voltar à edição da prova.'
     };
 
     // 4. Lógica de ativação (Quando o mouse entra)
     document.body.addEventListener('mouseover', (e) => {
-        const btn = e.target.closest('button, .floating-donate-btn, .alt-radio');
+        // NOVO: Adicionado o id previewGabarito e sua label para o mouse detectar
+        const btn = e.target.closest('button, .floating-donate-btn, .alt-radio, #previewGabarito, label[for="previewGabarito"]');
         if (!btn) return;
 
         let texto = '';
 
         if (btn.getAttribute('onclick') && dicas[btn.getAttribute('onclick')]) {
             texto = dicas[btn.getAttribute('onclick')];
-        } else if (btn.hasAttribute('title')) {
+        } 
+        // NOVO: Verifica se o mouse está sobre o checkbox "VER" ou a palavra "VER"
+        else if (btn.id === 'previewGabarito' || btn.getAttribute('for') === 'previewGabarito') {
+            texto = dicas['previewGabarito'];
+        } 
+        else if (btn.hasAttribute('title')) {
             texto = btn.getAttribute('title');
             btn.setAttribute('data-title', texto);
             btn.removeAttribute('title'); 
@@ -101,21 +111,22 @@ document.addEventListener('DOMContentLoaded', () => {
             
             tooltip.classList.add('show');
 
-            // CRONÔMETRO DE 3 SEGUNDOS:
-            clearTimeout(tempoLegenda); // Zera o cronômetro anterior se houver
+            // CRONÔMETRO
+            clearTimeout(tempoLegenda); 
             tempoLegenda = setTimeout(() => {
                 tooltip.classList.remove('show');
-            }, 2000); // 3000 ms = 3 segundos
+            }, 2000); 
         }
     });
 
     // 5. Lógica de desativação (Quando o mouse sai)
     document.body.addEventListener('mouseout', (e) => {
-        const btn = e.target.closest('button, .floating-donate-btn, .alt-radio');
+        // NOVO: O mouseout também precisa saber quem são os elementos novos
+        const btn = e.target.closest('button, .floating-donate-btn, .alt-radio, #previewGabarito, label[for="previewGabarito"]');
         
         if (btn && !btn.contains(e.relatedTarget)) {
             tooltip.classList.remove('show');
-            clearTimeout(tempoLegenda); // Cancela a contagem se o mouse sair antes dos 3 segundos
+            clearTimeout(tempoLegenda); 
         }
     });
 });
