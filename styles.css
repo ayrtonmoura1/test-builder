@@ -287,7 +287,25 @@ blockquote::after { content: ""; display: table; clear: both; }
 .math-wrapper { display: inline-block; vertical-align: middle; margin: 0 4px; position: relative; }
 math-field { min-width: 25px; padding: 2px 4px; background: transparent; border: 1px dashed transparent; border-radius: 4px; outline: none; font-size: var(--dynamic-font-size); }
 math-field:focus-within { border-color: var(--primary-color); background: #f8fafc; }
-math-field::part(menu-toggle), math-field::part(virtual-keyboard-toggle) { display: none !important; }
+/* --- Teclado Virtual de Equações --- */
+/* Esconde o menu inútil e o teclado por padrão */
+math-field::part(menu-toggle) { display: none !important; }
+math-field::part(virtual-keyboard-toggle) { display: none !important; }
+
+/* MÁGICA: O teclado só aparece quando o professor CLICAR na equação! */
+math-field:focus-within::part(virtual-keyboard-toggle) { 
+    display: flex !important; 
+    color: var(--primary-color) !important; 
+    cursor: pointer !important;
+}
+
+/* --- Feedback Visual da Barra de Ferramentas --- */
+.rtf-toolbar button.active-format {
+    background: #cbd5e1 !important; /* Fundo mais escurinho */
+    border-color: #94a3b8 !important; /* Borda marcada */
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2) !important; /* Efeito de botão afundado */
+    color: var(--text-main) !important;
+}
 .delete-math { position: absolute; top: -8px; right: -8px; background: var(--danger-color); color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.2s; z-index: 10; user-select: none; }
 .math-wrapper:hover .delete-math { opacity: 1; }
 
@@ -343,7 +361,7 @@ emoji-picker { width: 100%; height: 270px; --background: #f8fafc; border: none; 
 .alt-text { flex: 1; padding: 0 4px; border-bottom: 1px dashed transparent; min-height: 18px; }
 .alt-text:focus { border-bottom-color: var(--border-color); }
 .open-lines-container { margin: 10px 0; }
-.open-line { border-bottom: 1px solid #94a3b8; height: 22px; width: 100%; }
+.open-line { border-bottom: 1px solid #94a3b8; height: 32px; width: 100%; }
 
 .teacher-fields { display: none; flex-direction: column; gap: 8px; margin-top: 10px; }
 .block-item.active .teacher-fields { display: flex; animation: fadeIn 0.2s; } 
@@ -495,6 +513,56 @@ emoji-picker { width: 100%; height: 270px; --background: #f8fafc; border: none; 
     border-color: #dc2626 transparent transparent transparent !important;
 }
 
+/* --- Malha Quadriculada do ENEM --- */
+.student-grid {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    border-top: 1px solid var(--text-main);
+    border-left: 1px solid var(--text-main);
+}
+.student-grid-box {
+    width: calc(100% / 22); /* Cria exatamente 26 quadradinhos por linha */
+    height: 26px; 
+    border-right: 1px solid var(--text-main);
+    border-bottom: 1px solid var(--text-main);
+    box-sizing: border-box;
+}
+
+/* --- Gabarito Comentado (Roxo Elegante) --- */
+.gabarito-comentado-container { 
+    background: #fdf4ff; 
+    border: 1px solid #f0abfc; 
+    padding: 8px; 
+    border-radius: 4px; 
+}
+.gabarito-comentado-container label { 
+    font-size: 11px; 
+    font-weight: bold; 
+    color: #a21caf; 
+    display: block; 
+    margin-bottom: 4px; 
+}
+.comentario-input { 
+    width: 100%; 
+    background: transparent; 
+    border: none; 
+    outline: none; 
+    font-size: 12px; 
+    color: #701a75; 
+    min-height: 45px; 
+    resize: vertical; 
+    border-bottom: 1px dashed #e879f9; 
+    font-family: inherit; 
+}
+
+/* Garante a impressão perfeita no PDF do Professor */
+@media print {
+    body.print-with-answers .comentario-input { 
+        resize: none; 
+        overflow: hidden; 
+    }
+}
 
 /* --- IMPRESSÃO 100% LIMPA --- */
 @media print {
@@ -654,6 +722,170 @@ emoji-picker { width: 100%; height: 270px; --background: #f8fafc; border: none; 
 .habilidade-input { width: 100%; background: transparent; border: none; outline: none; font-size: 12px; color: #854d0e; min-height: 45px; resize: none; overflow: hidden; border-bottom: 1px dashed #fde047; font-family: inherit; }
 
 }
+
+/* =========================================================
+   CARTÃO RESPOSTA (GABARITO ESTILO ENEM COM OMR - 5 COLUNAS)
+========================================================= */
+.answer-sheet-container { display: none; }
+
+body.print-answer-sheet .blocks-container { display: none !important; }
+body.print-answer-sheet .answer-sheet-container { display: block !important; margin-top: 10px; }
+body.print-answer-sheet .exam-instructions { display: none !important; }
+
+.gabarito-enem-wrapper {
+    border: none; 
+    padding: 0;   
+    background: #fff;
+    font-family: Arial, sans-serif;
+}
+
+/* Cabeçalho dividido (Instruções na esquerda, Código na direita) */
+.gabarito-top-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #0f172a;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    gap: 15px;
+}
+
+.gabarito-instructions {
+    flex: 1;
+    font-size: 11px;
+    color: #0f172a;
+    line-height: 1.4;
+}
+
+/* --- Código do Aluno Miniatura com OMR --- */
+.gabarito-codigo-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+}
+.codigo-label-title {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+.codigo-grid { display: flex; gap: 4px; }
+.codigo-col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+
+/* A caixa onde o aluno escreve o número */
+.codigo-box { width: 14px; height: 18px; border: 1px solid #0f172a; margin-bottom: 3px; }
+
+/* Espaçador invisível para a coluna do OMR pular a caixa de texto */
+.codigo-box-spacer { width: 14px; height: 18px; border: 1px solid transparent; margin-bottom: 3px; }
+
+/* --- Bolinhas com Centralização Ótica Perfeita --- */
+.bubble-num {
+    width: 14px; 
+    height: 14px;
+    border: 1px solid #0f172a;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7px;
+    font-weight: bold;
+    color: #0f172a;
+    box-sizing: border-box;
+    
+    /* Zera a entrelinha padrão do navegador */
+    line-height: 0 !important; 
+    margin: 0 !important;
+    /* Empurra 1 pixel para baixo para compensar o topo da letra/número */
+    padding: 1px 0 0 0 !important; 
+}
+
+
+/* Container do OMR do Aluno para alinhar perfeitamente com a bolinha de 14px */
+.omr-codigo-wrapper {
+    height: 14px; 
+    display: flex;
+    align-items: center;
+}
+
+/* --- GRID DE 5 COLUNAS BLINDADO --- */
+.gabarito-questions-grid {
+    column-count: 5; 
+    column-gap: 12px; /* Gap reduzido para não estourar a folha */
+    column-rule: 1px dashed #cbd5e1;
+    width: 100%; 
+}
+
+/* --- Linha do Gabarito (Altura Cravada) --- */
+.gabarito-row {
+    display: flex;
+    align-items: center;
+    gap: 4px; 
+    padding: 3px 2px; 
+    margin-bottom: 3px; 
+    border-bottom: 1px solid #929292; 
+    border-radius: 3px; 
+    break-inside: avoid;
+    page-break-inside: avoid;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    
+    /* A MÁGICA: Força TODAS as linhas a terem exatamente 22px de altura, 
+       não importa se tem 2, 5 bolinhas ou se é texto puro! */
+    height: 22px !important; 
+    box-sizing: border-box;
+}
+
+/* Cor alternada para facilitar a leitura */
+.gabarito-row:nth-child(even) {
+    background-color: #ddeeffe1 !important; 
+}
+
+/* A MARCA OMR (Retângulo Preto) */
+.omr-mark {
+    width: 12px; 
+    height: 5px;
+    background-color: #000;
+    flex-shrink: 0;
+}
+
+/* Número da Questão */
+.gabarito-qnum { 
+    font-weight: bold; 
+    font-size: 11px; /* Fonte reduzida para economizar espaço */
+    width: 15px; 
+    text-align: right; 
+    color: #0f172a; 
+    flex-shrink: 0;
+}
+
+/* Container das Bolinhas */
+.gabarito-bubbles { 
+    display: flex; 
+    gap: 3px; 
+}
+
+.bubble-letter {
+    width: 14px; 
+    height: 14px;
+    border: 1px solid #0f172a;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px; 
+    font-weight: bold;
+    color: #0f172a;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    
+    /* Zera a entrelinha padrão do navegador */
+    line-height: 0 !important;
+    margin: 0 !important;
+    /* Empurra 1 pixel para baixo para compensar o topo da letra/número */
+    padding: 1px 0 0 0 !important; 
+}
+
 
 /* --- Rodapé do App --- */
 .app-footer {
