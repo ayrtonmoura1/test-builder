@@ -82,13 +82,18 @@
                     Exportar</button>
             </div>
         </div>
-        <div style="margin: 15px 0 10px 0; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: bold; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
-    <input type="checkbox" id="previewGabarito" onchange="FolhaResposta.togglePreview(this)" style="cursor: pointer; transform: scale(1.3); accent-color: var(--primary-color);">
-    <label for="previewGabarito" style="cursor: pointer; color: var(--text-main); user-select: none;">Visualizar Folha na Tela</label>
+        <div style="display: flex; gap: 8px; margin-top: 15px; margin-bottom: 10px; align-items: stretch;">
+    
+    <button type="button" class="btn-secondary" style="flex: 1; margin: 0; padding: 8px;" onclick="FolhaResposta.imprimir()">
+        <i class="ph ph-file-text"></i> Imprimir Folha
+    </button>
+    
+    <div style="display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 0 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+        <input type="checkbox" id="previewGabarito" onchange="FolhaResposta.togglePreview(this)" style="cursor: pointer; transform: scale(1.2); accent-color: var(--primary-color);">
+        <label for="previewGabarito" style="cursor: pointer; color: var(--text-main); font-size: 11px; font-weight: bold; user-select: none;">VER</label>
+    </div>
+    
 </div>
-        <button type="button" class="btn-secondary btn-full" onclick="FolhaResposta.imprimir()">
-    <i class="ph ph-file-text"></i> Imprimir Folha de Respostas
-</button>
         <div class="tools-section">
             <h3>Finalizar</h3>
             <div class="btn-grid">
