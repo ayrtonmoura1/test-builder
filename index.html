@@ -7,11 +7,13 @@
     <title>Test Builder</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <script defer src="https://unpkg.com/mathlive"></script>
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
     <link rel="stylesheet" href="styles.css">
 
-    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-FRY1Q4JDV8"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -38,7 +40,6 @@
                     <option value="14px">Confortável (14px)</option>
                     <option value="16px">Grande (16px)</option>
                     <option value="18px">Extra (18px)</option>
-
                 </select>
             </label>
             <div class="config-label" style="margin-top: 10px;">
@@ -47,6 +48,19 @@
                     <option value="line">Linha Simples</option>
                     <option value="grid">Malha Quadriculada (ENEM)</option>
                 </select>
+            </div>
+            
+            <div class="config-label" style="margin-top: 10px;">
+                Folha de Respostas:
+                <select id="answerSheetMode" onchange="app.changeAnswerSheetMode()">
+                    <option value="none" selected>Sem folha de resposta</option>
+                    <option value="attached">Junto do caderno (antes das questões)</option>
+                    <option value="separate">Separada do caderno (nova pág.)</option>
+                </select>
+            </div>
+            <div class="config-label" id="omrToggleGroup" style="display: none; margin-top: 10px; flex-direction: row; align-items: center; gap: 5px;">
+                <input type="checkbox" id="includeStudentOmr" onchange="app.toggleStudentOmr()" checked style="cursor: pointer; transform: scale(1.2);">
+                <label for="includeStudentOmr" style="cursor: pointer; margin: 0;">Incluir Código do Aluno (OMR)</label>
             </div>
         </div>
 
@@ -82,22 +96,11 @@
                     Exportar</button>
             </div>
         </div>
-        <div style="display: flex; gap: 8px; margin-top: 15px; margin-bottom: 10px; align-items: stretch;">
-    
-    <button type="button" class="btn-secondary" style="flex: 1; margin: 0; padding: 8px;" onclick="FolhaResposta.imprimir()">
-        <i class="ph ph-file-text"></i> Imprimir Folha
-    </button>
-    
-    <div style="display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 0 12px; border-radius: 6px; border: 1px solid var(--border-color);">
-        <input type="checkbox" id="previewGabarito" onchange="FolhaResposta.togglePreview(this)" style="cursor: pointer; transform: scale(1.2); accent-color: var(--primary-color);">
-        <label for="previewGabarito" style="cursor: pointer; color: var(--text-main); font-size: 11px; font-weight: bold; user-select: none;">VER</label>
-    </div>
-    
-</div>
+        
         <div class="tools-section">
             <h3>Finalizar</h3>
             <div class="btn-grid">
-                <button class="btn-secondary" onclick="window.print()"><i class="ph ph-printer"></i> PDF
+                <button class="btn-secondary" onclick="app.printAluno()"><i class="ph ph-printer"></i> PDF
                     (Aluno)</button>
                 <button class="btn-secondary" onclick="printWithAnswers()"
                     style="background: #059669; border-color: #047857;"><i class="ph ph-chalkboard-teacher"></i> PDF
@@ -122,7 +125,6 @@
                 <div class="header-main-box">
 
                     <div class="header-top-section">
-
                         <div class="header-logo">
                             <label for="logoUpload" class="image-upload-wrapper">
                                 <div class="img-placeholder bg-logo" id="logoPlaceholder">
@@ -171,8 +173,8 @@
                             <div class="grade-label">NOTA</div>
                             <div class="grade-value"></div>
                         </div>
-
                     </div>
+                    
                     <div class="header-student-section">
                         <div class="h-col" style="flex: 5;">
                             <div class="header-student-section h-row">
@@ -187,19 +189,19 @@
                             <div class="signature-line"></div>
                         </div>
                     </div>
-
                 </div>
 
-                <div class="exam-instructions" contenteditable="true" data-field="instructions"
-                    onblur="app.saveState()">
-                    <strong>INSTRUÇÕES:</strong> Preencha o cabeçalho. Marque apenas uma alternativa por questão. (Cole
-                    imagens e tabelas livremente).
+                <div class="instructions-and-omr-wrapper">
+                    <div class="exam-instructions" contenteditable="true" data-field="instructions" onblur="app.saveState()">
+                        <strong>INSTRUÇÕES:</strong> Preencha o cabeçalho. Marque apenas uma alternativa por questão. (Cole imagens e tabelas livremente).
+                    </div>
+                    <div id="omrContainer" style="display: none;"></div>
                 </div>
             </header>
 
-           <div class="blocks-container cols-2" id="blocksContainer"></div>
-
             <div id="answerSheetContainer" class="answer-sheet-container"></div>
+
+            <div class="blocks-container cols-2" id="blocksContainer"></div>
 
         </div>
         <footer class="app-footer no-print">
@@ -226,6 +228,52 @@
                 <div id="tab-arrows" class="symbol-grid"></div>
                 <div id="tab-emojis" class="emoji-container">
                     <emoji-picker></emoji-picker>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mathModalOverlay" class="modal-overlay no-print" style="display: none;"
+        onclick="if(event.target===this) app.closeMathModal()">
+        <div class="modal-content" style="width: 550px; max-width: 95vw;">
+            <div class="modal-header">
+                <h3><i class="ph ph-math-operations"></i> Inserir Equação Matemática</h3>
+                <button class="modal-close" onclick="app.closeMathModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 15px; background: #f8fafc;">
+                
+                <div style="display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; align-items: center;">
+                    <button class="btn-secondary" onclick="app.addLatexShortcut('\\frac{a}{b}', 4)">Fração</button>
+                    <button class="btn-secondary" onclick="app.addLatexShortcut('x^{2}', 2)">Potência</button>
+                    <button class="btn-secondary" onclick="app.addLatexShortcut('x_{2}', 2)">Índice</button>
+                    <button class="btn-secondary" onclick="app.addLatexShortcut('\\sqrt{x}', 2)">Raiz</button>
+                    <button class="btn-secondary" onclick="app.addLatexShortcut('\\pi', 0)">π</button>
+                    <button class="btn-secondary" onclick="app.addLatexShortcut('\\pm', 0)">±</button>
+                    
+                    <a href="https://katex.org/docs/supported.html" target="_blank" class="btn-secondary" style="margin-left: auto; background: #f0fdf4; color: #166534; border-color: #bbf7d0; text-decoration: none;" title="Abrir página com todas as fórmulas suportadas">
+                        <i class="ph ph-book-open"></i> Ver Todas (Docs)
+                    </a>
+                </div>
+
+                <label style="font-size: 11px; font-weight: bold; margin-bottom: 5px; display: block; color: var(--text-muted);">CÓDIGO DA EXPRESSÃO:</label>
+                <textarea id="mathLatexInput" style="width: 100%; height: 80px; padding: 10px; font-size: 14px; font-family: monospace; border: 1px solid var(--border-color); border-radius: 4px;" placeholder="Digite a fórmula... Ex: \\frac{1}{2} + x^2" oninput="app.updateMathPreview()"></textarea>
+
+                <div style="margin-top: 15px; background: white; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color);">
+                    <label style="font-size: 11px; font-weight: bold; margin-bottom: 8px; display: block; color: var(--text-muted);">
+                        <i class="ph ph-magnifying-glass-plus"></i> AJUSTAR TAMANHO DA EQUAÇÃO:
+                    </label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="range" id="mathSizeSlider" min="0.5" max="3.5" step="0.1" value="1.2" style="flex: 1; cursor: pointer;" oninput="app.updateMathPreview()">
+                        <span id="mathSizeLabel" style="font-size: 13px; font-weight: bold; width: 45px; text-align: right; color: var(--primary-color);">120%</span>
+                    </div>
+                </div>
+
+                <label style="font-size: 11px; font-weight: bold; margin-top: 15px; margin-bottom: 5px; display: block; color: var(--text-muted);">PRÉ-VISUALIZAÇÃO (AO VIVO):</label>
+                <div id="mathPreview" style="min-height: 60px; padding: 10px; border: 1px dashed var(--primary-color); background: white; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 18px; overflow-x: auto; color: var(--text-main);">
+                </div>
+
+                <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
+                    <button class="btn-primary" onclick="app.confirmMathInsert()"><i class="ph ph-check-circle"></i> Inserir Equação na Prova</button>
                 </div>
             </div>
         </div>
