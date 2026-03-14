@@ -95,9 +95,16 @@ document.addEventListener('DOMContentLoaded', () => {
             isRestoring = false;
         }
 
-        // 6. Configura os atalhos de teclado globais
+        /// 6. Configura os atalhos de teclado globais
         document.addEventListener('keydown', (e) => {
-            // Previne o conflito com as teclas do próprio sistema operativo
+            
+            // NOVO: Se o usuário estiver focado num campo de texto (textarea ou input), 
+            // deixa o navegador fazer o Ctrl+Z nativo para o texto e ignora a prova.
+            if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
+                return; 
+            }
+
+            // Previne o conflito com as teclas do próprio sistema operativo para a prova
             if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'z') {
                 e.preventDefault(); 
                 window.desfazer();
