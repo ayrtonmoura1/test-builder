@@ -5,13 +5,53 @@ const app = {
         studentStyle: 'line', 
         blocks: [],
         activeBlockId: null,
-        savedSelection: null
+        savedSelection: null,
+        answerSheetMode: 'none', 
+        includeStudentOmr: true,
+        pageBorders: false // NOVO
     },
+    
+    currentEditingMathNode: null,
 
     changeStudentStyle() {
         this.state.studentStyle = document.getElementById('studentStyleSelect').value;
         this.applyStudentStyle();
         this.saveState();
+    },
+    
+    changeAnswerSheetMode() {
+        this.state.answerSheetMode = document.getElementById('answerSheetMode').value;
+        const omrGroup = document.getElementById('omrToggleGroup');
+        
+        if(this.state.answerSheetMode === 'none') {
+            omrGroup.style.display = 'none';
+        } else {
+            omrGroup.style.display = 'flex';
+        }
+        
+        this.saveState();
+        if(typeof FolhaResposta !== 'undefined') FolhaResposta.gerarHTML();
+    },
+
+    toggleStudentOmr() {
+        this.state.includeStudentOmr = document.getElementById('includeStudentOmr').checked;
+        this.saveState();
+        if(typeof FolhaResposta !== 'undefined') FolhaResposta.gerarHTML();
+    },
+
+    // NOVO: Funções da Borda
+    togglePageBorders() {
+        this.state.pageBorders = document.getElementById('pageBordersToggle').checked;
+        this.applyPageBorders();
+        this.saveState();
+    },
+
+    applyPageBorders() {
+        if (this.state.pageBorders) {
+            document.body.classList.add('show-page-border');
+        } else {
+            document.body.classList.remove('show-page-border');
+        }
     },
 
     applyStudentStyle() {
@@ -32,12 +72,11 @@ const app = {
 
     renderStudentGrid() {
         const container = document.getElementById('studentGridContainer');
-        if (!container || container.innerHTML !== '') return; // Só desenha se estiver vazio
+        if (!container || container.innerHTML !== '') return; 
         
         const grid = document.createElement('div');
         grid.className = 'student-grid';
         
-        // Desenha 52 quadradinhos (2 linhas de 26)
         for (let i = 0; i < 44; i++) {
             const box = document.createElement('div');
             box.className = 'student-grid-box';
@@ -46,8 +85,6 @@ const app = {
         container.appendChild(grid);
     },
 
-    // --- MATRIZ DA BNCC (URLs DA API EXTERNA) ---
-    // --- MATRIZ DA BNCC (DADOS LOCAIS DO ARQUIVO bncc_data.js) ---
     bnccConfig: {
         infantil: {
             disciplinas: {
@@ -85,7 +122,7 @@ const app = {
     },
     bnccCurrentData: [],
 
-init() {
+    init() {
         this.loadState();
         this.applyGlobalSettings();
         this.bindHeaderEvents();
@@ -93,10 +130,8 @@ init() {
         this.buildSymbolPicker();
         this.bindEmojiPicker();
 
-        // NOVO: Liga o monitor de cliques globais (Essencial para as barras funcionarem direito)
         document.addEventListener('mousedown', (e) => this.handleGlobalClick(e));
 
-        // NOVO: Injeta a barra de ferramentas no cabeçalho sem o botão da BNCC (false)
         const headerRtfContainer = document.getElementById('headerRtfContainer');
         if (headerRtfContainer) {
             headerRtfContainer.innerHTML = this.getRtfToolbar(false);
@@ -108,11 +143,10 @@ init() {
             this.renderBlocks();
         }
     },
-   handleGlobalClick(event) {
-        // Controle de foco do cabeçalho
+    
+    handleGlobalClick(event) {
         const header = document.querySelector('.exam-header');
         if (header) {
-            // Removido o verificador da '.rtf-toolbar' daqui para não bugar com os blocos
             if (event.target.closest('.exam-header') || event.target.closest('.modal-overlay')) {
                 header.classList.add('active-header');
             } else {
@@ -120,7 +154,6 @@ init() {
             }
         }
 
-        // Controle de foco dos blocos
         if (!event.target.closest('.block-item') && !event.target.closest('.toolbar') && !event.target.closest('.modal-overlay')) {
             this.setActiveBlock(null);
         }
@@ -133,44 +166,31 @@ init() {
 
             const clipboardData = e.clipboardData || window.clipboardData;
 
-            // --- NOVO: LÓGICA DE DISTRIBUIÇÃO AUTOMÁTICA DE ALTERNATIVAS ---
             if (target.classList.contains('alt-text')) {
                 const pastedText = clipboardData.getData('text/plain');
 
-                // Se o texto colado contiver quebras de linha (múltiplas linhas copiadas)
                 if (pastedText && pastedText.includes('\n')) {
-                    e.preventDefault(); // Impede o navegador de colar tudo dentro de uma única caixa
+                    e.preventDefault(); 
 
-                    // Divide o texto por quebras de linha e remove as linhas que estiverem em branco
                     const lines = pastedText.split(/\r?\n/).filter(line => line.trim() !== '');
-
-                    // Expressão Regular para identificar e limpar coisas como "a)", "A -", "1.", "b)", etc. do início.
                     const regexPrefix = /^([a-zA-Z0-9][\.\-\)]\s*)/;
-
-                    // Pega o bloco de questão atual e encontra todas as alternativas dele
                     const block = target.closest('.question-block');
                     const allAlts = Array.from(block.querySelectorAll('.alt-text'));
-
-                    // Descobre em qual alternativa (índice) o utilizador clicou para colar
                     const startIndex = allAlts.indexOf(target);
 
                     if (startIndex > -1) {
-                        // Distribui as linhas coladas a partir da caixa atual para as caixas seguintes
                         for (let i = 0; i < lines.length; i++) {
                             const currentAlt = allAlts[startIndex + i];
-                            // Só preenche se a alternativa existir no DOM (limita à quantidade do bloco)
                             if (currentAlt) {
-                                // Limpa o prefixo indesejado e insere na caixa
                                 currentAlt.innerText = lines[i].replace(regexPrefix, '').trim();
                             }
                         }
-                        this.saveState(); // Salva a prova
-                        return; // Sai da função para não executar o resto
+                        this.saveState(); 
+                        return; 
                     }
                 }
             }
 
-            // --- LÓGICA ORIGINAL: COMPRESSÃO E COLAGEM DE IMAGENS ---
             const items = clipboardData.items;
             for (let index in items) {
                 const item = items[index];
@@ -255,7 +275,6 @@ init() {
         this.state.savedSelection = null;
     },
 
-    // --- FUNÇÕES MODAL BNCC (APIs Online) ---
     openBnccModal() {
         if (!this.state.activeBlockId) {
             alert('Você precisa clicar dentro de um bloco de questão antes de inserir uma habilidade.');
@@ -263,7 +282,6 @@ init() {
         }
         this.saveState();
         document.getElementById('bnccModalOverlay').style.display = 'flex';
-        // Limpa a busca anterior
         document.getElementById('bnccSearchInput').value = '';
     },
 
@@ -301,17 +319,14 @@ init() {
         resultsContainer.innerHTML = '<p style="text-align:center; padding: 20px;"><strong>Carregando base de dados local...</strong></p>';
 
         try {
-            // Puxa os dados diretamente da variável global definida no bncc_data.js
             const data = bnccDadosLocais[etapa];
 
-            // Verifica se o usuário realmente colou o JSON lá dentro
             if (!data || Object.keys(data).length === 0) {
                 throw new Error("Os dados JSON não foram encontrados no arquivo bncc_data.js.");
             }
 
             let list = [];
 
-            // Função auxiliar para procurar a chave correta
             const getNestedData = (apiData, key) => {
                 if (Array.isArray(apiData)) {
                     for (let item of apiData) {
@@ -321,7 +336,6 @@ init() {
                 return apiData[key] || apiData;
             };
 
-            // Varredura da estrutura do JSON
             if (etapa === 'infantil') {
                 const eiData = getNestedData(data, 'educacao_infantil');
                 const campos = eiData.campos_experiencia || eiData.campos_de_experiencias || [];
@@ -410,7 +424,6 @@ init() {
             div.style.alignItems = 'flex-start';
             div.style.transition = 'background 0.2s';
 
-            // O value do checkbox recebe apenas o INDEX numérico (Evita quebrar o HTML com aspas duplas no texto)
             div.innerHTML = `
                 <input type="checkbox" class="bncc-checkbox" id="bncc_item_${index}" value="${index}" style="margin-top: 4px; transform: scale(1.2); cursor: pointer;">
                 <label for="bncc_item_${index}" style="font-size: 12px; cursor: pointer; line-height: 1.5; flex: 1; user-select: none;">
@@ -424,7 +437,6 @@ init() {
     },
 
     filterBnccResults() {
-        // Pega o texto, converte pra minúsculo e remove acentos para busca flexível
         const rawTerm = document.getElementById('bnccSearchInput').value;
         const term = rawTerm.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         const items = document.querySelectorAll('#bnccResults > div');
@@ -448,7 +460,6 @@ init() {
 
         let combinedText = [];
         checkboxes.forEach(cb => {
-            // Usa o Index para buscar o texto limpo direto da Matriz em memória
             const index = parseInt(cb.value);
             const item = this.bnccCurrentData[index];
             if (item) {
@@ -464,14 +475,12 @@ init() {
                 if (habInput) {
                     const currentVal = habInput.value.trim();
 
-                    // Adiciona quebra de linha dupla para visualização bonita
                     if (currentVal) {
                         habInput.value = currentVal + '\n\n' + combinedText.join('\n\n');
                     } else {
                         habInput.value = combinedText.join('\n\n');
                     }
 
-                    // Dispara evento para salvar no LocalStorage e dá um feedback visual verde rápido
                     habInput.dispatchEvent(new Event('input', { bubbles: true }));
                     this.saveState();
 
@@ -485,7 +494,6 @@ init() {
         }
         this.closeBnccModal();
     },
-    // --- FIM FUNÇÕES BNCC ---
 
     switchTab(tabId, btnElement) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -510,19 +518,104 @@ init() {
         this.saveState();
     },
 
-    insertMath() {
-        // Habilitamos o "onfocus" para que as ferramentas extras de matemática 
-        // apareçam na tela do celular/PC apenas quando o professor clicar na equação.
-        const mathHTML = `&nbsp;<span class="math-wrapper" contenteditable="false"><span class="delete-math no-print" onclick="this.parentElement.remove(); app.saveState();" title="Excluir equação">×</span><math-field virtual-keyboard-mode="onfocus" placeholder="f(x)"></math-field></span>&nbsp;`;
-        document.execCommand('insertHTML', false, mathHTML);
-        this.saveState();
+    // --- LÓGICA DO KATEX COM SUPORTE A SLIDER DE TAMANHO ---
+    
+    openMathModal(existingNode = null) {
+        if (!existingNode) {
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+                this.state.savedSelection = sel.getRangeAt(0).cloneRange();
+            }
+        }
+
+        this.currentEditingMathNode = existingNode;
+        const input = document.getElementById('mathLatexInput');
+        const slider = document.getElementById('mathSizeSlider');
+        
+        if (existingNode) {
+            input.value = existingNode.dataset.latex || '';
+            slider.value = existingNode.dataset.size || 1.2;
+        } else {
+            input.value = '';
+            slider.value = 1.2; 
+        }
+        
+        document.getElementById('mathModalOverlay').style.display = 'flex';
+        this.updateMathPreview();
+        input.focus();
     },
 
-    insertFraction() {
-        // Insere uma equação já moldada como fração (caixa em cima, caixa embaixo)
-        const mathHTML = `&nbsp;<span class="math-wrapper" contenteditable="false"><span class="delete-math no-print" onclick="this.parentElement.remove(); app.saveState();" title="Excluir equação">×</span><math-field virtual-keyboard-mode="onfocus">\\frac{\\placeholder{}}{\\placeholder{}}</math-field></span>&nbsp;`;
-        document.execCommand('insertHTML', false, mathHTML);
+    closeMathModal() {
+        document.getElementById('mathModalOverlay').style.display = 'none';
+        this.currentEditingMathNode = null;
+    },
+
+    addLatexShortcut(shortcut, offsetCursor = 0) {
+        const input = document.getElementById('mathLatexInput');
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const text = input.value;
+        
+        input.value = text.substring(0, start) + shortcut + text.substring(end);
+        
+        input.focus();
+        const newPos = start + shortcut.length - offsetCursor;
+        input.selectionStart = input.selectionEnd = newPos; 
+        
+        this.updateMathPreview();
+    },
+
+    updateMathPreview() {
+        const latex = document.getElementById('mathLatexInput').value;
+        const preview = document.getElementById('mathPreview');
+        const size = document.getElementById('mathSizeSlider').value;
+        
+        // Atualiza a label de porcentagem do tamanho
+        document.getElementById('mathSizeLabel').innerText = Math.round(size * 100) + '%';
+        
+        if (!latex.trim()) {
+            preview.innerHTML = '<span style="color:#cbd5e1; font-size: 14px;">A pré-visualização aparecerá aqui...</span>';
+            return;
+        }
+        
+        try {
+            preview.innerHTML = katex.renderToString(latex, { throwOnError: false, displayMode: true });
+            // Aplica o tamanho na pré-visualização
+            preview.style.fontSize = `${size}em`;
+        } catch (e) {
+            preview.innerText = 'Erro de formatação...';
+        }
+    },
+
+    confirmMathInsert() {
+        const latex = document.getElementById('mathLatexInput').value;
+        if (!latex.trim()) {
+            this.closeMathModal();
+            return;
+        }
+
+        const size = document.getElementById('mathSizeSlider').value;
+        const renderedHtml = katex.renderToString(latex, { throwOnError: false });
+
+        if (this.currentEditingMathNode) {
+            this.currentEditingMathNode.dataset.latex = latex;
+            this.currentEditingMathNode.dataset.size = size;
+            this.currentEditingMathNode.style.fontSize = `${size}em`;
+            this.currentEditingMathNode.querySelector('.katex-render-container').innerHTML = renderedHtml;
+        } else {
+            if (this.state.savedSelection) {
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(this.state.savedSelection);
+            }
+            
+            const mathHTML = `&nbsp;<span class="math-wrapper katex-editable" contenteditable="false" data-latex="${latex.replace(/"/g, '&quot;')}" data-size="${size}" style="font-size: ${size}em;" ondblclick="app.openMathModal(this)" title="Duplo clique para editar"><span class="delete-math no-print" onclick="this.parentElement.remove(); app.saveState();" title="Excluir">×</span><span class="katex-render-container">${renderedHtml}</span></span>&nbsp;`;
+            
+            document.execCommand('insertHTML', false, mathHTML);
+        }
+        
         this.saveState();
+        this.closeMathModal();
     },
 
     toggleQuote() {
@@ -639,6 +732,32 @@ init() {
         this.saveState();
     },
 
+    getFormattedFilename(versionSuffix) {
+        let titleEl = document.querySelector('[data-field="title"]');
+        let title = titleEl ? titleEl.innerText.trim() : 'Avaliacao';
+        if (!title || title === 'Digite aqui o título da avaliação') title = 'Avaliacao';
+
+        title = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        title = title.replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '_').toLowerCase();
+
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const MM = String(now.getMonth() + 1).padStart(2, '0');
+        const yy = String(now.getFullYear()).slice(-2);
+        const HH = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+
+        return `${title}_data_${versionSuffix}_${dd}_${MM}_${yy}_${HH}_${mm}_${ss}`;
+    },
+
+    printAluno() {
+        const originalTitle = document.title;
+        document.title = this.getFormattedFilename('versao_aluno');
+        window.print();
+        document.title = originalTitle;
+    },
+
     exportJSON() {
         this.saveState();
         if (this.state.blocks.length === 0) {
@@ -650,7 +769,7 @@ init() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `banco_questoes_enem_${Date.now()}.json`;
+        a.download = this.getFormattedFilename('backup') + '.json';
         a.click();
         URL.revokeObjectURL(url);
     },
@@ -697,7 +816,7 @@ init() {
         this.applyGlobalSettings();
 
         document.querySelectorAll('.question-text, .alt-text, .exam-instructions, .text-content').forEach(container => {
-            container.querySelectorAll('*:not(math-field):not(.math-wrapper)').forEach(el => {
+            container.querySelectorAll('*:not(.katex-editable):not(.katex-render-container)').forEach(el => {
                 if (el.style.fontSize) {
                     el.style.fontSize = '';
                     if (el.getAttribute('style') === '') el.removeAttribute('style');
@@ -720,7 +839,7 @@ init() {
         const headerData = {
             title: document.querySelector('[data-field="title"]').innerText,
             school: document.querySelector('[data-field="school"]').innerText,
-            teacher: document.querySelector('[data-field="teacher"]').innerText, // NOVO
+            teacher: document.querySelector('[data-field="teacher"]').innerText, 
             class: document.querySelector('[data-field="class"]').innerText,
             date: document.querySelector('[data-field="date"]').innerText,
             instructions: document.querySelector('[data-field="instructions"]').innerHTML,
@@ -789,7 +908,16 @@ init() {
             }
         });
 
-        const dataToSave = { fontSize: this.state.fontSize, columns: this.state.columns, studentStyle: this.state.studentStyle, header: headerData, blocks }; // Adicionei o studentStyle aqui!
+        const dataToSave = { 
+            fontSize: this.state.fontSize, 
+            columns: this.state.columns, 
+            studentStyle: this.state.studentStyle, 
+            answerSheetMode: this.state.answerSheetMode, 
+            includeStudentOmr: this.state.includeStudentOmr,
+            pageBorders: this.state.pageBorders, // NOVO
+            header: headerData, 
+            blocks 
+        }; 
         localStorage.setItem('enemBuilder_v53', JSON.stringify(dataToSave));
         this.state.blocks = blocks;
     },
@@ -806,6 +934,28 @@ init() {
             if (data.studentStyle) this.state.studentStyle = data.studentStyle;
             if (document.getElementById('studentStyleSelect')) document.getElementById('studentStyleSelect').value = this.state.studentStyle;
             this.applyStudentStyle();
+
+            if (data.answerSheetMode !== undefined) this.state.answerSheetMode = data.answerSheetMode;
+            if (data.includeStudentOmr !== undefined) this.state.includeStudentOmr = data.includeStudentOmr;
+            
+            const modeSelect = document.getElementById('answerSheetMode');
+            if(modeSelect) {
+                modeSelect.value = this.state.answerSheetMode;
+                document.getElementById('omrToggleGroup').style.display = this.state.answerSheetMode === 'none' ? 'none' : 'flex';
+            }
+            
+            const omrCheck = document.getElementById('includeStudentOmr');
+            // NOVO: Carrega as bordas salvas
+            if (data.pageBorders !== undefined) this.state.pageBorders = data.pageBorders;
+            const borderCheck = document.getElementById('pageBordersToggle');
+            if(borderCheck) {
+                borderCheck.checked = this.state.pageBorders;
+            }
+            this.applyPageBorders();
+
+            if(omrCheck) {
+                omrCheck.checked = this.state.includeStudentOmr;
+            }
 
             if (data.header) {
                 document.querySelector('[data-field="title"]').innerText = data.header.title || '';
@@ -833,8 +983,6 @@ init() {
                 this.state.blocks = data.blocks;
             }
         }
-
-        
     },
 
     clearData() {
@@ -853,7 +1001,6 @@ init() {
             const el = document.querySelector(`[data-id="${id}"]`);
             if (el) {
                 el.classList.add('active');
-                // NOVO: Ajusta a altura da textarea assim que o bloco se torna visível
                 setTimeout(() => {
                     el.querySelectorAll('textarea').forEach(ta => {
                         ta.style.height = 'auto';
@@ -925,7 +1072,7 @@ init() {
             if (block.id === this.state.activeBlockId) el.classList.add('active');
 
             el.addEventListener('mousedown', (e) => {
-                if (!e.target.closest('.drag-handle') && !e.target.closest('math-field') && !e.target.closest('.delete-math') && !e.target.closest('button') && !e.target.closest('input.spacer-slider') && !e.target.closest('textarea.habilidade-input')) {
+                if (!e.target.closest('.drag-handle') && !e.target.closest('.katex-editable') && !e.target.closest('.delete-math') && !e.target.closest('button') && !e.target.closest('input.spacer-slider') && !e.target.closest('textarea.habilidade-input')) {
                     this.setActiveBlock(block.id);
                 }
             });
@@ -933,13 +1080,13 @@ init() {
             container.appendChild(el);
         });
 
-        document.querySelectorAll('math-field').forEach(mf => {
-            mf.addEventListener('input', () => this.saveState());
-        });
-
         if (scrollContainer) {
             scrollContainer.offsetHeight;
             scrollContainer.scrollTop = currentScroll;
+        }
+
+        if (typeof FolhaResposta !== 'undefined') {
+            FolhaResposta.gerarHTML();
         }
     },
 
@@ -990,29 +1137,24 @@ init() {
     formatText(command, value = null) { 
         document.execCommand(command, false, value); 
         this.saveState(); 
-        
-        // NOVO: Força a barra a atualizar o visual no exato momento do clique!
         this.updateToolbarUI(); 
     },
     updateToolbarUI() {
-        // Procura a barra de ferramentas do bloco que está ativo no momento
         const activeToolbar = document.querySelector('.block-item.active .rtf-toolbar') || document.querySelector('.exam-header.active-header .rtf-toolbar');
         if (!activeToolbar) return;
 
-        // Lista dos comandos que queremos vigiar
         const commands = ['bold', 'italic', 'underline', 'superscript', 'subscript', 'justifyLeft', 'justifyCenter', 'justifyRight'];
         
         commands.forEach(cmd => {
             const btn = activeToolbar.querySelector(`[data-cmd="${cmd}"]`);
             if (btn) {
-                // Tenta ler o estado atual do cursor no navegador
                 try {
                     if (document.queryCommandState(cmd)) {
                         btn.classList.add('active-format');
                     } else {
                         btn.classList.remove('active-format');
                     }
-                } catch (e) {} // Ignora erros inofensivos em browsers antigos
+                } catch (e) {} 
             }
         });
     },
@@ -1117,46 +1259,67 @@ init() {
     },
 
     deleteBlock(id) {
-        const blockEl = document.querySelector(`[data-id="${id}"]`);
-        if (!blockEl) return;
-        
-        const controls = blockEl.querySelector('.block-controls');
-        if (!controls) return;
+        const blockEl = document.querySelector(`[data-id="${id}"]`);
+        if (!blockEl) return;
+        
+        const controls = blockEl.querySelector('.block-controls');
+        if (!controls) return;
 
-        // 1. MATA OS FANTASMAS: Limpa TUDO que for popover antes de abrir outro
-        document.querySelectorAll('.delete-confirm-popover').forEach(el => el.remove());
+        document.querySelectorAll('.delete-confirm-popover').forEach(el => el.remove());
 
-        // 2. Cria o novo popover com apenas UM botão
-        const popover = document.createElement('div');
-        popover.className = 'delete-confirm-popover no-print';
-        popover.innerHTML = `
-            <button type="button" onclick="app.confirmDelete('${id}')">Excluir?</button>
-        `;
-        
-        controls.style.position = 'relative';
-        controls.appendChild(popover);
-        
-        // 3. Lógica segura para fechar ao clicar fora (evita sobras na memória)
-        setTimeout(() => {
-            const closeHandler = (e) => {
-                // Só tenta fechar se o popover ainda existir na tela
-                if (popover && document.body.contains(popover) && !popover.contains(e.target)) {
-                    popover.remove();
-                }
-                // Remove este "espião de clique" da memória assim que ele agir
-                document.removeEventListener('click', closeHandler);
-            };
-            document.addEventListener('click', closeHandler);
-        }, 10);
-    },
+        const popover = document.createElement('div');
+        popover.className = 'delete-confirm-popover no-print';
+        popover.innerHTML = `
+            <button type="button" onclick="app.confirmDelete('${id}')">Excluir?</button>
+        `;
+        
+        controls.style.position = 'relative';
+        controls.appendChild(popover);
+        
+        setTimeout(() => {
+            const closeHandler = (e) => {
+                if (popover && document.body.contains(popover) && !popover.contains(e.target)) {
+                    popover.remove();
+                }
+                document.removeEventListener('click', closeHandler);
+            };
+            document.addEventListener('click', closeHandler);
+        }, 10);
+    },
 
-    confirmDelete(id) {
-        this.saveState(); // Salva o estado para o Ctrl+Z funcionar
-        this.state.blocks = this.state.blocks.filter(b => b.id !== id);
-        if(this.state.activeBlockId === id) this.state.activeBlockId = null;
-        this.renderBlocks();
-        this.saveState(); // Atualiza a prova limpa
-    },
+    confirmDelete(id) {
+        this.saveState(); 
+        this.state.blocks = this.state.blocks.filter(b => b.id !== id);
+        if(this.state.activeBlockId === id) this.state.activeBlockId = null;
+        this.renderBlocks();
+        this.saveState(); 
+    },
+
+    // NOVO: Função para duplicar um bloco
+    duplicateBlock(id) {
+        this.saveState();
+        const index = this.state.blocks.findIndex(b => b.id === id);
+        
+        if (index > -1) {
+            const blockToCopy = this.state.blocks[index];
+            // Faz uma cópia profunda (Deep Copy) para não bagunçar as referências
+            const newBlock = JSON.parse(JSON.stringify(blockToCopy));
+            newBlock.id = this.generateId(); // Cria um ID totalmente novo
+            
+            // Insere o bloco clonado logo abaixo do atual na lista
+            this.state.blocks.splice(index + 1, 0, newBlock);
+            
+            this.renderBlocks();
+            this.setActiveBlock(newBlock.id);
+            this.saveState();
+            
+            // Rola a tela suavemente para o bloco recém criado
+            setTimeout(() => {
+                const el = document.querySelector(`[data-id="${newBlock.id}"]`);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 50);
+        }
+    },
 
     toggleSetupFields(id) {
         const type = document.getElementById(`qType_${id}`).value;
@@ -1174,6 +1337,7 @@ init() {
             <div class="question-header">
                 <div class="question-header-left"><span class="drag-handle" title="Arraste para reordenar"><i class="ph ph-dots-six-vertical"></i></span></div>
                 <div class="block-controls">
+                    <button onclick="app.duplicateBlock('${block.id}')" title="Duplicar Bloco"><i class="ph ph-copy"></i></button>
                     <button onclick="app.toggleBlockLock('${block.id}')" class="${block.locked ? 'locked-btn' : 'unlocked-btn'}" title="${block.locked ? 'Bloqueado na linha inteira' : 'Destravado para 2 Colunas'}">
                         <i class="ph ${block.locked ? 'ph-lock-key' : 'ph-lock-key-open'}"></i>
                     </button>
@@ -1195,6 +1359,12 @@ init() {
                     <label id="wrap_lines_${block.id}" style="display:${block.qType === 'open' ? 'flex' : 'none'};">Linhas de Resposta: <input type="number" id="numLines_${block.id}" value="5" min="1" max="30"></label>
                 </div>
                 <button class="btn-primary" style="margin: 0 auto;" onclick="app.confirmQuestionSetup('${block.id}')">Gerar Bloco</button>
+            </div>
+            <div class="floating-add-menu no-print">
+                <button title="Inserir Questão" onclick="event.stopPropagation(); app.addQuestion()"><i class="ph ph-plus-circle"></i></button>
+                <button title="Texto Livre" onclick="event.stopPropagation(); app.addTextBlock()"><i class="ph ph-text-t"></i></button>
+                <button title="Separador" onclick="event.stopPropagation(); app.addDivider()"><i class="ph ph-minus"></i></button>
+                <button title="Bloco Vazio" onclick="event.stopPropagation(); app.addSpacer()"><i class="ph ph-bounding-box"></i></button>
             </div>
         `;
         return div;
@@ -1266,7 +1436,7 @@ init() {
                 <button type="button" data-cmd="justifyRight" title="Alinhar Direita" onmousedown="event.preventDefault(); app.formatText('justifyRight')"><i class="ph ph-text-align-right"></i></button>
                 
                 <div class="rtf-divider"></div>
-                <button type="button" title="Inserir Equação Livre" class="btn-math" onmousedown="event.preventDefault(); app.insertMath()"><b>&sum; Eq</b></button>
+                <button type="button" title="Inserir Equação" class="btn-math" onmousedown="event.preventDefault(); app.openMathModal()"><b>&sum; Eq</b></button>
                 
                 <div class="rtf-divider"></div>
                 <button type="button" title="Símbolos" class="btn-open-symbols" onmousedown="event.preventDefault(); app.openSymbolModal()"><i class="ph ph-smiley"></i> &Omega;</button>
@@ -1287,6 +1457,7 @@ init() {
                     <span style="font-size:11px; font-weight:bold; color:#64748b;">TEXTO LIVRE</span>
                 </div>
                 <div class="block-controls">
+                    <button onclick="app.duplicateBlock('${block.id}')" title="Duplicar Bloco"><i class="ph ph-copy"></i></button>
                     <button onclick="app.toggleBlockLock('${block.id}')" class="${block.locked ? 'locked-btn' : 'unlocked-btn'}" title="${block.locked ? 'Bloqueado na linha inteira' : 'Destravado para 2 Colunas'}">
                         <i class="ph ${block.locked ? 'ph-lock-key' : 'ph-lock-key-open'}"></i>
                     </button>
@@ -1296,6 +1467,12 @@ init() {
             ${this.getRtfToolbar(false)}
             <div class="text-content">
                 <div class="question-text" contenteditable="true" data-placeholder="Cole imagens, textos base, poemas..." onblur="app.saveState()">${block.text}</div>
+            </div>
+            <div class="floating-add-menu no-print">
+                <button title="Inserir Questão" onclick="event.stopPropagation(); app.addQuestion()"><i class="ph ph-plus-circle"></i></button>
+                <button title="Texto Livre" onclick="event.stopPropagation(); app.addTextBlock()"><i class="ph ph-text-t"></i></button>
+                <button title="Separador" onclick="event.stopPropagation(); app.addDivider()"><i class="ph ph-minus"></i></button>
+                <button title="Bloco Vazio" onclick="event.stopPropagation(); app.addSpacer()"><i class="ph ph-bounding-box"></i></button>
             </div>
         `;
 
@@ -1315,6 +1492,7 @@ init() {
                     <span style="font-size:11px; font-weight:bold; color:#64748b;">BLOCO VAZIO (ESPAÇADOR)</span>
                 </div>
                 <div class="block-controls">
+                    <button onclick="app.duplicateBlock('${block.id}')" title="Duplicar Bloco"><i class="ph ph-copy"></i></button>
                     <button onclick="app.toggleBlockLock('${block.id}')" class="${block.locked ? 'locked-btn' : 'unlocked-btn'}" title="${block.locked ? 'Bloqueado na linha inteira' : 'Destravado para 2 Colunas'}">
                         <i class="ph ${block.locked ? 'ph-lock-key' : 'ph-lock-key-open'}"></i>
                     </button>
@@ -1324,6 +1502,12 @@ init() {
             <div class="spacer-content" style="height: ${block.height || 100}px;" id="spacer_content_${block.id}">
                 <input type="range" class="spacer-slider no-print" min="50" max="800" value="${block.height || 100}" oninput="app.updateSpacerHeight('${block.id}', this.value)">
                 <span class="spacer-label no-print">Ajustar Altura: <span id="spacer_val_${block.id}">${block.height || 100}</span>px</span>
+            </div>
+            <div class="floating-add-menu no-print">
+                <button title="Inserir Questão" onclick="event.stopPropagation(); app.addQuestion()"><i class="ph ph-plus-circle"></i></button>
+                <button title="Texto Livre" onclick="event.stopPropagation(); app.addTextBlock()"><i class="ph ph-text-t"></i></button>
+                <button title="Separador" onclick="event.stopPropagation(); app.addDivider()"><i class="ph ph-minus"></i></button>
+                <button title="Bloco Vazio" onclick="event.stopPropagation(); app.addSpacer()"><i class="ph ph-bounding-box"></i></button>
             </div>
         `;
         return div;
@@ -1381,6 +1565,7 @@ init() {
             <div class="question-header no-print">
                 <div class="question-header-left"><span class="drag-handle" title="Arraste para reordenar"><i class="ph ph-dots-six-vertical"></i></span></div>
                 <div class="block-controls">
+                    <button onclick="app.duplicateBlock('${block.id}')" title="Duplicar Bloco"><i class="ph ph-copy"></i></button>
                     <button onclick="app.toggleBlockLock('${block.id}')" class="${block.locked ? 'locked-btn' : 'unlocked-btn'}" title="${block.locked ? 'Bloqueado na linha inteira' : 'Destravado para 2 Colunas'}">
                         <i class="ph ${block.locked ? 'ph-lock-key' : 'ph-lock-key-open'}"></i>
                     </button>
@@ -1412,11 +1597,16 @@ QUESTÃO <span class="auto-q-number">${String(block.autoNumber).padStart(2, '0')
                     <textarea class="comentario-input" placeholder="Explique por que esta é a resposta correta e as outras são falsas..." oninput="app.saveState()">${block.comentario || ''}</textarea>
                 </div>
             </div>
+            <div class="floating-add-menu no-print">
+                <button title="Inserir Questão" onclick="event.stopPropagation(); app.addQuestion()"><i class="ph ph-plus-circle"></i></button>
+                <button title="Texto Livre" onclick="event.stopPropagation(); app.addTextBlock()"><i class="ph ph-text-t"></i></button>
+                <button title="Separador" onclick="event.stopPropagation(); app.addDivider()"><i class="ph ph-minus"></i></button>
+                <button title="Bloco Vazio" onclick="event.stopPropagation(); app.addSpacer()"><i class="ph ph-bounding-box"></i></button>
+            </div>
         `;
 
         div.querySelector('.question-text').addEventListener('input', () => this.saveState());
         div.querySelectorAll('.alt-text').forEach(el => el.addEventListener('input', () => this.saveState()));
-        // NOVO: Evento que auto-ajusta a altura ao digitar ou ao receber o texto da BNCC
         div.querySelectorAll('textarea').forEach(ta => {
             ta.addEventListener('input', function () {
                 this.style.height = 'auto';
@@ -1426,9 +1616,6 @@ QUESTÃO <span class="auto-q-number">${String(block.autoNumber).padStart(2, '0')
         });
         return div;
     },
-
-
-
 
     createDividerDOM(block) {
         const div = document.createElement('div');
@@ -1441,6 +1628,7 @@ QUESTÃO <span class="auto-q-number">${String(block.autoNumber).padStart(2, '0')
                     <span style="font-size:11px; font-weight:bold; color:#64748b;">SEPARADOR DE SEÇÃO</span>
                 </div>
                 <div class="block-controls">
+                    <button onclick="app.duplicateBlock('${block.id}')" title="Duplicar Bloco"><i class="ph ph-copy"></i></button>
                     <button onclick="app.toggleBlockLock('${block.id}')" class="${block.locked ? 'locked-btn' : 'unlocked-btn'}" title="${block.locked ? 'Bloqueado na linha inteira' : 'Destravado para 2 Colunas'}">
                         <i class="ph ${block.locked ? 'ph-lock-key' : 'ph-lock-key-open'}"></i>
                     </button>
@@ -1448,6 +1636,12 @@ QUESTÃO <span class="auto-q-number">${String(block.autoNumber).padStart(2, '0')
                 </div>
             </div>
             <div class="divider-content"><span class="divider-text" contenteditable="true" data-placeholder="Nome da Seção" onblur="app.saveState()">${block.text}</span></div>
+            <div class="floating-add-menu no-print">
+                <button title="Inserir Questão" onclick="event.stopPropagation(); app.addQuestion()"><i class="ph ph-plus-circle"></i></button>
+                <button title="Texto Livre" onclick="event.stopPropagation(); app.addTextBlock()"><i class="ph ph-text-t"></i></button>
+                <button title="Separador" onclick="event.stopPropagation(); app.addDivider()"><i class="ph ph-minus"></i></button>
+                <button title="Bloco Vazio" onclick="event.stopPropagation(); app.addSpacer()"><i class="ph ph-bounding-box"></i></button>
+            </div>
         `;
         div.querySelector('.divider-content span').addEventListener('input', () => this.saveState());
         return div;
@@ -1498,20 +1692,33 @@ QUESTÃO <span class="auto-q-number">${String(block.autoNumber).padStart(2, '0')
         ws['!cols'] = [{ wch: 10 }, { wch: 12 }, { wch: 50 }, { wch: 15 }, { wch: 50 }, { wch: 40 }];
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Mapeamento da Prova");
-        XLSX.writeFile(wb, `Gabarito_${Date.now()}.xlsx`);
+        
+        let titleEl = document.querySelector('[data-field="title"]');
+        let title = titleEl ? titleEl.innerText.trim() : 'Avaliacao';
+        if (!title || title === 'Digite aqui o título da avaliação') title = 'Avaliacao';
+        
+        title = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        title = title.replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '_').toLowerCase();
+
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const MM = String(now.getMonth() + 1).padStart(2, '0');
+        const yy = String(now.getFullYear()).slice(-2);
+        const HH = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+
+        const fileName = `Gabarito_${title}_${dd}_${MM}_${yy}_${HH}_${mm}_${ss}.xlsx`;
+        
+        XLSX.writeFile(wb, fileName);
     }
 
-    
 };
 
-// ... aqui termina o código antigo ...
 document.addEventListener('DOMContentLoaded', () => app.init());
 
-// --- Monitor de Formatação Contínuo ---
-// Sempre que o utilizador clicar pelo texto com o rato ou teclado, a barra atualiza
 document.addEventListener('selectionchange', () => {
     if (typeof app !== 'undefined' && app.updateToolbarUI) {
         app.updateToolbarUI();
     }
 });
-
